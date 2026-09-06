@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام متابعة الطلاب — النسخة المحسنة</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{
+  --primary:#087f8c;--primary2:#0b9aaa;--dark:#075c66;--bg:#f3f7f8;
+  --card:#fff;--text:#17343a;--muted:#6b7f84;--border:#d9e5e8;
+  --success:#1f9d55;--danger:#c83d3d;--warning:#d89400;--info:#3f7fd8;
+  --shadow:0 8px 28px rgba(16,58,65,.09);--radius:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Tahoma,Arial,sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:260px;background:linear-gradient(180deg,#075c66,#087f8c);color:#fff;padding:20px 14px;position:sticky;top:0;height:100vh;z-index:20}
+.brand{padding:8px 10px 22px;border-bottom:1px solid rgba(255,255,255,.18);margin-bottom:15px}
+.brand h1{font-size:20px;margin:0 0 7px}.brand p{margin:0;color:#cdecef;font-size:12px;line-height:1.7}
+.nav button{width:100%;border:0;background:transparent;color:#eafcfd;text-align:right;padding:12px 13px;border-radius:11px;margin:3px 0}
+.nav button:hover,.nav button.active{background:rgba(255,255,255,.15)}
+.sidebar-bottom{position:absolute;bottom:15px;right:14px;left:14px;font-size:11px;color:#cdecef;line-height:1.8}
+.main{flex:1;min-width:0;padding:22px}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
+.topbar h2{margin:0;font-size:25px}.actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.btn{border:1px solid var(--border);background:#fff;color:var(--text);border-radius:10px;padding:9px 13px;box-shadow:0 2px 7px rgba(0,0,0,.03)}
+.btn:hover{transform:translateY(-1px)}.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.success{background:var(--success);color:#fff;border-color:var(--success)}
+.btn.danger{background:var(--danger);color:#fff;border-color:var(--danger)}
+.btn.warning{background:var(--warning);color:#fff;border-color:var(--warning)}
+.btn.small{padding:6px 9px;font-size:12px}.btn.icon{padding:8px 10px}
+.page{display:none}.page.active{display:block}
+.cards{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:14px;margin-bottom:18px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:17px}
+.metric{display:flex;justify-content:space-between;align-items:center}.metric .num{font-size:28px;font-weight:800;color:var(--dark)}.metric .label{color:var(--muted);font-size:13px}
+.panel{background:#fff;border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px;margin-bottom:18px}
+.panel-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px}.panel-title h3{margin:0;font-size:17px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+input,select,textarea{width:100%;border:1px solid var(--border);border-radius:9px;padding:9px;background:#fff;color:var(--text);outline:none}
+textarea{min-height:92px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--primary2);box-shadow:0 0 0 3px rgba(11,154,170,.1)}
+.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:900px;background:#fff}
+th,td{border-bottom:1px solid var(--border);padding:8px;text-align:center;white-space:nowrap;font-size:12px}
+th{background:var(--dark);color:#fff;position:sticky;top:0;z-index:3}
+tr:hover td{background:#f8fcfc}
+td.name{text-align:right;font-weight:700}
+.att{min-width:42px;height:34px;padding:3px;border-radius:7px;border:1px solid #dbe8ea;background:#fff;font-weight:700}
+.att.present{background:#dff5e7;color:#168047}.att.absent{background:#ffe3e3;color:#b72d2d}
+.att.late{background:#fff1cc;color:#9a6700}.att.leave{background:#e2edff;color:#2f65ad}
+.badge{display:inline-block;padding:4px 8px;border-radius:99px;font-size:11px}
+.badge.green{background:#dff5e7;color:#167d45}.badge.red{background:#ffe3e3;color:#a82b2b}
+.badge.yellow{background:#fff1cc;color:#956300}.badge.blue{background:#e2edff;color:#2f65ad}
+.badge.purple{background:#ece2fb;color:#6c3fc5}
+.toolbar{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin-bottom:14px}.toolbar>div{min-width:145px}
+.search{max-width:280px}.progress{height:9px;background:#e7eff1;border-radius:99px;overflow:hidden}.progress span{height:100%;display:block;background:linear-gradient(90deg,var(--primary),#27b7c5)}
+.empty{text-align:center;padding:30px;color:var(--muted)}
+.toast{position:fixed;bottom:20px;left:20px;background:#17343a;color:#fff;padding:11px 15px;border-radius:10px;box-shadow:var(--shadow);opacity:0;transform:translateY(10px);transition:.25s;z-index:100;max-width:90vw}
+.toast.show{opacity:1;transform:translateY(0)}
+.modal-back{display:none;position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:80;align-items:center;justify-content:center;padding:18px}
+.modal-back.show{display:flex}.modal{background:#fff;width:min(700px,100%);max-height:90vh;overflow:auto;border-radius:18px;padding:20px;box-shadow:0 20px 70px rgba(0,0,0,.25)}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}.modal-head h3{margin:0}
+.report{max-width:1000px;margin:auto}.report-head{display:flex;justify-content:space-between;gap:15px;align-items:center;border-bottom:3px solid var(--primary);padding-bottom:15px;margin-bottom:18px}
+.report-title{font-size:23px;font-weight:800;color:var(--dark)}.report-meta{color:var(--muted);font-size:12px}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}.kpi{border:1px solid var(--border);border-radius:12px;padding:13px;text-align:center}.kpi b{font-size:22px;display:block}
+.legend{display:flex;gap:8px;flex-wrap:wrap;font-size:11px;margin-top:9px}
+.sticky-actions{position:sticky;bottom:10px;display:flex;justify-content:center;gap:8px;margin-top:15px}
+.notice{background:#eef9fa;border-right:4px solid var(--primary);padding:11px;border-radius:9px;font-size:12px;line-height:1.8}
+.notice.warn{background:#fff7df;border-right-color:var(--warning)}
+.snapshot{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--border);padding:9px 0}
+.muted{color:var(--muted);font-size:12px}.danger-zone{border:1px dashed #e2a6a6;background:#fff8f8}
+.sig-row{display:flex;justify-content:space-between;gap:20px;margin-top:34px;padding-top:18px;border-top:1px solid var(--border);font-size:13px;color:var(--muted)}
+.trend-svg{display:block;width:100%;height:220px}
+.trend-controls{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.trend-controls select{width:auto}
+.tr-up{color:var(--success);font-weight:700}.tr-down{color:var(--danger);font-weight:700}.tr-flat{color:var(--muted);font-weight:700}
+.mono{font-family:Consolas,"Courier New",monospace;direction:ltr;text-align:left;unicode-bidi:plaintext;font-size:12px;background:#f3f7f8;border:1px solid var(--border);border-radius:8px;padding:8px 10px;display:inline-block}
+@media(max-width:1050px){.cards{grid-template-columns:repeat(3,1fr)}.sidebar{width:220px}.grid4{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){
+ .app{display:block}.sidebar{width:100%;height:auto;position:relative}.sidebar-bottom{position:static;margin-top:12px}.nav{display:grid;grid-template-columns:repeat(2,1fr);gap:3px}.main{padding:12px}
+ .cards{grid-template-columns:repeat(2,1fr)}.grid2,.grid3,.grid4{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.topbar h2{font-size:21px}.kpi-row{grid-template-columns:repeat(2,1fr)}.sig-row{flex-direction:column;gap:10px}
+}
+@page{size:A4 landscape;margin:10mm}
+@media print{
+ .sidebar,.topbar,.no-print,.toolbar,.sticky-actions{display:none!important}.main{padding:0}.page{display:none!important}.page.print-target{display:block!important}.panel{box-shadow:none;border:1px solid #bbb}
+ body{background:#fff}.report{max-width:none}.table-wrap{overflow:visible}table{min-width:0;font-size:8px}th,td{padding:3px}
+ .report table{font-size:10px}.report .card{box-shadow:none}.report .panel{border:0}
+ .trend-svg{height:150px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">
+    <h1 id="brandTitle">نظام متابعة الطلاب</h1>
+    <p>حفظ تلقائي محليًا + مزامنة اختيارية عبر Google Drive</p>
+  </div>
+  <nav class="nav">
+    <button data-page="dashboard" class="active">لوحة التحكم</button>
+    <button data-page="students">الطلاب</button>
+    <button data-page="attendance">السجل الشهري</button>
+    <button data-page="profile">ملف الطالب الشامل</button>
+    <button data-page="backup">الحفظ والتصدير</button>
+    <button data-page="settings">الإعدادات</button>
+  </nav>
+  <div class="sidebar-bottom">الحفظ التلقائي مفعل.<br><span id="sideSaveTime">لم يتم الحفظ بعد</span></div>
+</aside>
+
+<main class="main">
+<div class="topbar">
+  <h2 id="pageTitle">لوحة التحكم</h2>
+  <div class="actions no-print">
+    <span id="syncStatus" class="badge blue" style="display:none">—</span>
+    <span id="saveStatus" class="badge green">محفوظ</span>
+    <button class="btn success" onclick="saveNow()">حفظ الآن</button>
+    <button class="btn primary" onclick="exportBackup()">نسخة JSON</button>
+  </div>
+</div>
+
+<section id="dashboard" class="page active">
+  <div class="cards">
+    <div class="card metric"><div><div class="label">إجمالي الطلاب</div><div class="num" id="mStudents">0</div></div><span>👥</span></div>
+    <div class="card metric"><div><div class="label">الحضور</div><div class="num" id="mPresent">0</div></div><span>✓</span></div>
+    <div class="card metric"><div><div class="label">الغياب</div><div class="num" id="mAbsent">0</div></div><span>غ</span></div>
+    <div class="card metric"><div><div class="label">التأخر</div><div class="num" id="mLate">0</div></div><span>ت</span></div>
+    <div class="card metric"><div><div class="label">يحتاج متابعة</div><div class="num" id="mNeed">0</div></div><span>!</span></div>
+  </div>
+  <div class="grid2">
+    <div class="panel">
+      <div class="panel-title"><h3>مؤشرات الشهر</h3><span id="dashMonth" class="badge blue"></span></div>
+      <div style="margin:12px 0">نسبة الحضور <b id="attendancePct">0%</b></div>
+      <div class="progress"><span id="attendanceBar" style="width:0%"></span></div>
+      <div class="legend"><span>✓ حاضر</span><span>غ غائب</span><span>ت متأخر</span><span>ع استئذان</span></div>
+    </div>
+    <div class="panel"><div class="panel-title"><h3>الأكثر انتظامًا</h3></div><div id="topStudents"></div></div>
+  </div>
+  <div class="panel"><div class="panel-title"><h3>تنبيهات المتابعة</h3></div><div id="alerts"></div></div>
+</section>
+
+<section id="students" class="page">
+  <div class="panel">
+    <div class="panel-title"><h3>إدارة الطلاب</h3><button class="btn primary" onclick="openStudentModal()">+ إضافة طالب</button></div>
+    <div class="toolbar no-print">
+      <div class="search"><label>بحث</label><input id="studentSearch" oninput="renderStudents()" placeholder="اسم الطالب أو الرقم"></div>
+      <div><label>الصف</label><select id="studentGradeFilter" onchange="renderStudents()"><option value="">كل الصفوف</option></select></div>
+      <button class="btn" onclick="exportStudentsCSV()">تصدير CSV</button>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>م</th><th>اسم الطالب</th><th>الصف</th><th>الشعبة</th><th>الرقم</th><th>الهاتف</th><th>ملاحظات</th><th>إجراءات</th></tr></thead><tbody id="studentsBody"></tbody></table></div>
+  </div>
+</section>
+
+<section id="attendance" class="page">
+  <div class="panel">
+    <div class="panel-title"><h3>السجل الشهري للحضور</h3><div class="no-print actions"><button class="btn" onclick="exportAttendanceCSV()">CSV</button><button class="btn primary" onclick="printPage('attendance')">طباعة / PDF</button></div></div>
+    <div class="grid3 no-print">
+      <div><label>الشهر</label><select id="monthSelect" onchange="changeMonth()"></select></div>
+      <div><label>السنة</label><input id="yearInput" type="number" min="2000" max="2200" onchange="changeMonth()"></div>
+      <div><label>بحث عن طالب</label><input id="attendanceSearch" oninput="renderAttendance()" placeholder="اسم الطالب"></div>
+    </div>
+    <div class="notice no-print">اضغط على خلية اليوم لتدوير الحالة: <b>✓ حاضر ← غ غائب ← ت متأخر ← ع استئذان ← فارغ</b>. يحفظ التغيير تلقائيًا.</div>
+    <div id="attendanceTable" class="table-wrap" style="margin-top:14px"></div>
+  </div>
+</section>
+
+<section id="profile" class="page">
+  <div class="panel no-print">
+    <div class="panel-title"><h3>ملف الطالب الشامل</h3><button class="btn primary" onclick="printPage('profile')">🖨️ طباعة الملف الشامل</button></div>
+    <div class="toolbar">
+      <div style="min-width:240px"><label>اختر الطالب</label><select id="profileStudent" onchange="renderProfile()"></select></div>
+    </div>
+    <div class="notice">ملف واحد شامل لكل طالب يجمع: الحضور الشهري، المتابعة الشهرية (الواجبات/المشاركة/السلوك)، وتحديد المستوى في اللغة العربية (٦ مهارات من ٠-٥ مع توصية بمستوى بين يديك المناسب، قابلة للتكرار مع سجل تاريخي). حدّث البيانات في اللوحة أدناه، وستظهر مجتمعة في كشف واحد جاهز للطباعة.</div>
+  </div>
+  <div class="panel no-print" id="profileFollowupForm">
+    <div class="panel-title"><h3>تحديث بيانات هذا الشهر</h3><button class="btn small primary" onclick="openPlacementModal()">+ تقييم مستوى جديد</button></div>
+    <div class="grid2">
+      <div><label>التقدير العام</label><select id="pfGrade" onchange="saveProfileFollowup()"><option value="">—</option><option>ممتاز</option><option>جيد جدًا</option><option>جيد</option><option>مقبول</option><option>يحتاج متابعة</option></select></div>
+      <div><label>الواجبات / الإنجاز</label><textarea id="pfHomework" oninput="scheduleProfileFollowupSave()"></textarea></div>
+      <div><label>المشاركة</label><textarea id="pfParticipation" oninput="scheduleProfileFollowupSave()"></textarea></div>
+      <div><label>السلوك</label><textarea id="pfBehavior" oninput="scheduleProfileFollowupSave()"></textarea></div>
+      <div><label>ملاحظات الشهر</label><textarea id="pfNotes" oninput="scheduleProfileFollowupSave()"></textarea></div>
+    </div>
+  </div>
+  <div id="profileReport"></div>
+</section>
+
+<section id="backup" class="page">
+  <div class="panel">
+    <div class="panel-title"><h3>الحفظ والنسخ الاحتياطي</h3></div>
+    <div class="notice"><b>الحفظ الأساسي تلقائي داخل المتصفح.</b> إذا فعّلت مزامنة Google Drive من صفحة الإعدادات فستُزامن بياناتك تلقائيًا بين أجهزتك. والنسخة JSON تبقى وسيلة أكيدة للنقل والاستعادة، والطباعة يمكن حفظها PDF من نافذة الطباعة في المتصفح.</div>
+    <div class="grid4" style="margin-top:15px">
+      <div class="card"><h3>نسخة كاملة JSON</h3><p class="muted">جميع الطلاب والسجلات والإعدادات.</p><button class="btn primary" onclick="exportBackup()">تصدير JSON</button></div>
+      <div class="card"><h3>استعادة نسخة</h3><p class="muted">يتم التحقق من الملف قبل الاستبدال.</p><input type="file" id="importFile" accept=".json,application/json" onchange="importBackup(event)"></div>
+      <div class="card"><h3>بيانات الطلاب CSV</h3><p class="muted">للفتح في Excel وغيره.</p><button class="btn" onclick="exportStudentsCSV()">تصدير الطلاب</button></div>
+      <div class="card"><h3>السجل الشهري CSV</h3><p class="muted">الشهر المحدد حاليًا.</p><button class="btn" onclick="exportAttendanceCSV()">تصدير الحضور</button></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="panel-title"><h3>نسخ الاسترجاع الداخلية</h3><button class="btn small" onclick="makeSnapshot(true)">إنشاء لقطة الآن</button></div>
+    <div class="notice warn">يحفظ النظام حتى 10 لقطات محلية على هذا الجهاز فقط. هذه اللقطات لا تغني عن تصدير JSON إلى ملف خارجي.</div>
+    <div id="snapshotsList" style="margin-top:10px"></div>
+  </div>
+  <div class="panel">
+    <div class="panel-title"><h3>حالة التخزين</h3></div>
+    <p id="storageInfo"></p>
+  </div>
+  <div class="panel danger-zone">
+    <h3>منطقة حساسة</h3><p class="muted">الحذف لا يمكن التراجع عنه إلا إذا كانت لديك نسخة JSON أو لقطة داخلية.</p>
+    <button class="btn danger" onclick="clearAllData()">حذف جميع البيانات</button>
+  </div>
+</section>
+
+<section id="settings" class="page">
+  <div class="panel">
+    <div class="panel-title"><h3>إعدادات النظام</h3></div>
+    <div class="grid2">
+      <div><label>اسم المدرسة / الجهة</label><input id="schoolName"></div>
+      <div><label>اسم المعلم</label><input id="teacherName"></div>
+      <div><label>اسم السجل</label><input id="recordName"></div>
+      <div><label>الصف الافتراضي</label><select id="defaultGrade"></select></div>
+    </div>
+    <hr style="border:0;border-top:1px solid var(--border);margin:18px 0">
+    <h3>الصفوف</h3>
+    <div class="toolbar"><input id="newGrade" placeholder="اسم الصف الجديد"><button class="btn primary" onclick="addGrade()">إضافة صف</button></div>
+    <div id="gradesList"></div>
+    <div class="sticky-actions"><button class="btn success" onclick="saveSettings()">حفظ الإعدادات</button></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><h3>مزامنة Google Drive (اختياري، ومجاني)</h3><span id="gdriveBadge" class="badge blue">غير متصل</span></div>
+    <div class="notice">
+      تتيح لك هذه الخاصية حفظ بيانات النظام في ملف واحد داخل Google Drive الخاص بك، بحيث تُفتح نفس البيانات تلقائيًا من أي جهاز تدخل منه لهذه الصفحة. يحتاج إعدادها مرة واحدة فقط داخل حسابك في Google Cloud (مجاني):
+      <ol style="margin:8px 0 0;padding-inline-start:18px;line-height:2">
+        <li>افتح <a href="https://console.cloud.google.com/" target="_blank" rel="noopener">console.cloud.google.com</a> وأنشئ مشروعًا جديدًا (أي اسم).</li>
+        <li>من "APIs &amp; Services" → "Library" فعّل <b>Google Drive API</b>.</li>
+        <li>من "APIs &amp; Services" → "OAuth consent screen": اختر External، واملأ الاسم فقط، وأضف بريدك في "Test users".</li>
+        <li>من "APIs &amp; Services" → "Credentials" → "Create Credentials" → "OAuth client ID"، النوع: <b>Web application</b>.</li>
+        <li>في خانة "Authorized JavaScript origins" أضف هذا العنوان بالضبط: <span class="mono" id="originHint"></span></li>
+        <li>انسخ الـ "Client ID" الناتج (ينتهي بـ .apps.googleusercontent.com) والصقه في الخانة أدناه.</li>
+      </ol>
+    </div>
+    <div class="toolbar" style="margin-top:12px">
+      <div style="min-width:320px"><label>Google OAuth Client ID</label><input id="gdriveClientId" placeholder="xxxxxxxxxx.apps.googleusercontent.com"></div>
+      <button class="btn primary" onclick="connectGoogleDrive()">حفظ واتصال</button>
+      <button class="btn" onclick="disconnectGoogleDrive()">قطع الاتصال</button>
+    </div>
+    <p class="muted" id="gdriveStatusText" style="margin-top:8px">لم يتم الاتصال بعد.</p>
+  </div>
+</section>
+</main>
+</div>
+
+<div id="modalBack" class="modal-back" onclick="if(event.target===this)closeModal()">
+ <div class="modal">
+  <div class="modal-head"><h3 id="modalTitle">إضافة طالب</h3><button class="btn icon" onclick="closeModal()">×</button></div>
+  <input type="hidden" id="editStudentId">
+  <div class="grid2">
+   <div><label>اسم الطالب *</label><input id="studentName"></div>
+   <div><label>الصف</label><select id="studentGrade"></select></div>
+   <div><label>الشعبة</label><input id="studentSection" value="أ"></div>
+   <div><label>رقم الطالب</label><input id="studentNumber"></div>
+   <div><label>رقم الهاتف</label><input id="studentPhone"></div>
+   <div><label>ملاحظات</label><input id="studentNotes"></div>
+  </div>
+  <div class="sticky-actions"><button class="btn primary" onclick="saveStudent()">حفظ</button><button class="btn" onclick="closeModal()">إلغاء</button></div>
+ </div>
+</div>
+
+<div id="placementModalBack" class="modal-back" onclick="if(event.target===this)closePlacementModal()">
+ <div class="modal">
+  <div class="modal-head"><h3>تقييم مستوى جديد</h3><button class="btn icon" onclick="closePlacementModal()">×</button></div>
+  <input type="hidden" id="placementStudentId">
+  <div class="grid2">
+   <div><label>التاريخ</label><input type="date" id="placementDate"></div>
+  </div>
+  <div id="placementSkillsForm" style="margin-top:10px"></div>
+  <div style="margin-top:10px"><label>ملاحظات</label><textarea id="placementNotes" placeholder="أي ملاحظات إضافية عن أداء الطالب أثناء التقييم..."></textarea></div>
+  <div class="sticky-actions"><button class="btn primary" onclick="savePlacement()">حفظ التقييم</button><button class="btn" onclick="closePlacementModal()">إلغاء</button></div>
+ </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY="smart_student_tracker_v2";
+const OLD_KEY="smart_student_tracker_v1";
+const SNAP_KEY="smart_student_tracker_snapshots_v2";
+const SCHEMA_VERSION=2;
+const monthNames=["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+
+const SKILLS=[
+ {key:"listening",label:"الاستماع",desc:[
+   "لا يفهم كلامًا بسيطًا حتى مع التكرار",
+   "يفهم كلمات مفردة مألوفة فقط",
+   "يفهم جملًا قصيرة وبسيطة إذا أُعيدت ببطء",
+   "يفهم حديثًا مباشرًا عن مواضيع مألوفة بسرعة عادية",
+   "يفهم حوارات ونصوصًا مسموعة متوسطة التعقيد",
+   "يفهم كلامًا طبيعيًا سريعًا حتى في مواضيع غير مألوفة"]},
+ {key:"reading",label:"القراءة",desc:[
+   "لا يتعرف على الحروف أو الكلمات",
+   "يقرأ كلمات مفردة ببطء شديد",
+   "يقرأ جملًا بسيطة مشكولة بمساعدة",
+   "يقرأ نصوصًا قصيرة غير مشكولة بفهم عام",
+   "يقرأ نصوصًا متوسطة الطول بفهم تفصيلي",
+   "يقرأ نصوصًا متنوعة بطلاقة وفهم عميق"]},
+ {key:"speaking",label:"المحادثة والتعبير الشفهي",desc:[
+   "لا يستطيع تكوين جملة منطوقة",
+   "يجيب بكلمات مفردة (نعم / لا / اسم)",
+   "يكوّن جملًا قصيرة بسيطة عن نفسه",
+   "يتحدث بجمل مترابطة عن مواضيع يومية مألوفة",
+   "يعبّر بطلاقة نسبية مع أخطاء بسيطة لا تعيق الفهم",
+   "يتحدث بطلاقة وثقة عن مواضيع متنوعة مع نطق سليم"]},
+ {key:"writing",label:"الكتابة والتعبير التحريري",desc:[
+   "لا يستطيع كتابة حروف أو كلمات",
+   "يكتب كلمات مفردة بأخطاء إملائية كثيرة",
+   "يكتب جملًا قصيرة بسيطة بأخطاء ملحوظة",
+   "يكتب فقرة قصيرة مترابطة بأخطاء محدودة",
+   "يكتب نصوصًا متوسطة بترابط جيد وأخطاء قليلة",
+   "يكتب بأسلوب متماسك وسليم نحويًا وإملائيًا"]},
+ {key:"grammar",label:"القواعد النحوية والصرفية",desc:[
+   "لا يميّز التراكيب الأساسية",
+   "يعرف مفردات معزولة دون تركيبها في جملة",
+   "يستخدم جملًا اسمية أو فعلية بسيطة بأخطاء متكررة",
+   "يطبّق قواعد أساسية (الأفعال، الضمائر) بأخطاء قليلة",
+   "يطبّق تراكيب متوسطة التعقيد بدقة غالبة",
+   "يتقن القواعد ويستخدمها تلقائيًا في الكلام والكتابة"]},
+ {key:"vocabulary",label:"الرصيد اللغوي (المفردات)",desc:[
+   "رصيد شبه معدوم",
+   "عشرات الكلمات المألوفة فقط",
+   "مئات الكلمات الأساسية اليومية",
+   "مفردات كافية لمواضيع يومية متنوعة",
+   "مفردات جيدة تشمل مواضيع عامة متعددة",
+   "رصيد واسع يشمل تعبيرات ومرادفات ودلالات دقيقة"]}
+];
+const LEVEL_BANDS=[
+ {max:7,label:"المستوى الأول",badge:"blue"},
+ {max:15,label:"المستوى الثاني",badge:"yellow"},
+ {max:23,label:"المستوى الثالث",badge:"green"},
+ {max:30,label:"المستوى الرابع",badge:"purple"}
+];
+function recommendLevel(total){for(const b of LEVEL_BANDS)if(total<=b.max)return b;return LEVEL_BANDS[LEVEL_BANDS.length-1]}
+
+function buildTrendSVG(chrono,metricKey,maxVal){
+ const W=600,H=200,PAD=34;
+ const vals=chrono.map(en=>metricKey==="total"?en.total:en.scores[metricKey]);
+ const n=vals.length;
+ const xAt=i=>n<=1?W/2:PAD+i*((W-2*PAD)/(n-1));
+ const yAt=v=>(H-PAD)-(v/maxVal)*(H-2*PAD);
+ const pts=vals.map((v,i)=>({x:xAt(i),y:yAt(v),v,d:chrono[i].date}));
+ const poly=pts.map(p=>p.x.toFixed(1)+","+p.y.toFixed(1)).join(" ");
+ const grid=[0,Math.round(maxVal/2),maxVal].map(g=>{
+   let y=yAt(g);
+   return `<line x1="${PAD}" y1="${y.toFixed(1)}" x2="${(W-PAD/2).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#e3ecee" stroke-width="1"/><text x="${(W-PAD/2+4).toFixed(1)}" y="${(y+4).toFixed(1)}" font-size="10" fill="#6b7f84">${g}</text>`;
+ }).join("");
+ const circles=pts.map(p=>`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#087f8c"><title>${esc(new Date(p.d).toLocaleDateString("ar-SA"))} — ${p.v}</title></circle>`).join("");
+ return `<svg viewBox="0 0 ${W} ${H}" class="trend-svg" preserveAspectRatio="none">${grid}<polyline points="${poly}" fill="none" stroke="#087f8c" stroke-width="2.5"/>${circles}</svg>`;
+}
+function deltaBadge(cur,prev){
+ if(prev===undefined||prev===null)return "";
+ let dl=cur-prev,cls=dl>0?"tr-up":dl<0?"tr-down":"tr-flat",arrow=dl>0?"▲":dl<0?"▼":"▬";
+ return `<span class="${cls}">${arrow} ${dl>0?"+":""}${dl}</span>`;
+}
+function renderPlacementTrend(id,list){
+ if(list.length<2)return `<p class="muted" style="margin-top:10px">أضف تقييم مستوى ثانيًا لهذا الطالب لعرض منحنى تطوره عبر الوقت.</p>`;
+ let chrono=[...list].reverse();
+ let metric=placementMetric||"total";
+ let sk=SKILLS.find(x=>x.key===metric);
+ let metricLabel=metric==="total"?"المجموع الكلي (من 30)":(sk?sk.label:metric);
+ let maxVal=metric==="total"?30:5;
+ let svg=buildTrendSVG(chrono,metric,maxVal);
+ let latest=chrono[chrono.length-1],prev=chrono[chrono.length-2],first=chrono[0];
+ let val=en=>metric==="total"?en.total:en.scores[metric];
+ let opts=`<option value="total" ${metric==="total"?"selected":""}>المجموع الكلي</option>`+SKILLS.map(s=>`<option value="${s.key}" ${metric===s.key?"selected":""}>${esc(s.label)}</option>`).join("");
+ return `
+  <div class="trend-wrap">
+   <div class="trend-controls no-print">
+     <label style="margin:0">منحنى التطور:</label>
+     <select onchange="placementMetric=this.value;refreshProfileReport()">${opts}</select>
+   </div>
+   ${svg}
+   <div class="kpi-row" style="grid-template-columns:repeat(3,1fr);margin-top:10px">
+     <div class="kpi"><span>آخر قيمة — ${esc(metricLabel)}</span><b>${val(latest)}</b></div>
+     <div class="kpi"><span>مقارنة بالتقييم السابق</span><b>${deltaBadge(val(latest),val(prev))}</b></div>
+     <div class="kpi"><span>مقارنة بأول تقييم</span><b>${deltaBadge(val(latest),val(first))}</b></div>
+   </div>
+  </div>`;
+}
+
+const defaultData={
+ version:SCHEMA_VERSION,
+ settings:{school:"",teacher:"",record:"نظام متابعة الطلاب",grades:["الأول","الثاني","الثالث","الرابع","الخامس","السادس","المتوسط","الثانوي"],defaultGrade:"الأول"},
+ students:[],
+ records:{},
+ levelAssessments:{},
+ meta:{createdAt:new Date().toISOString(),updatedAt:null}
+};
+let data=loadData(), currentMonth=new Date().getMonth(), currentYear=new Date().getFullYear(), profileTimer=null, placementMetric="total";
+
+function clone(x){return JSON.parse(JSON.stringify(x))}
+function normalizeData(x){
+ const d=clone(defaultData);
+ if(!x||typeof x!=="object")return d;
+ d.version=SCHEMA_VERSION;
+ d.settings=Object.assign(d.settings,x.settings||{});
+ d.settings.grades=Array.isArray(d.settings.grades)&&d.settings.grades.length?d.settings.grades:clone(defaultData.settings.grades);
+ d.students=Array.isArray(x.students)?x.students:[];
+ d.records=x.records&&typeof x.records==="object"?x.records:{};
+ d.levelAssessments=x.levelAssessments&&typeof x.levelAssessments==="object"?x.levelAssessments:{};
+ d.meta=Object.assign(d.meta,x.meta||{});
+ return d;
+}
+function loadData(){
+ try{
+   let raw=localStorage.getItem(KEY);
+   if(raw)return normalizeData(JSON.parse(raw));
+   let old=localStorage.getItem(OLD_KEY);
+   if(old){
+     let migrated=normalizeData(JSON.parse(old));
+     localStorage.setItem(KEY,JSON.stringify(migrated));
+     localStorage.removeItem(OLD_KEY);
+     return migrated;
+   }
+ }catch(e){}
+ return clone(defaultData);
+}
+function saveData({snapshot=false}={}){
+ try{
+   data.meta.updatedAt=new Date().toISOString();
+   localStorage.setItem(KEY,JSON.stringify(data));
+   setSaveStatus("محفوظ","green");
+   updateStorageInfo();
+   updateSaveTime();
+   if(snapshot)makeSnapshot(false);
+   scheduleCloudPush();
+ }catch(e){
+   setSaveStatus("فشل الحفظ","red");
+   alert("تعذر الحفظ في المتصفح. صدّر نسخة JSON فورًا قبل إغلاق الصفحة.");
+ }
+}
+function saveNow(){saveData({snapshot:true});toast("تم حفظ البيانات وإنشاء نقطة استرجاع")}
+function setSaveStatus(t,c="green"){let e=document.getElementById("saveStatus");if(e){e.textContent=t;e.className="badge "+c}}
+function touch(){setSaveStatus("جارٍ الحفظ...","yellow");clearTimeout(window.__st);window.__st=setTimeout(()=>saveData(),250)}
+function toast(t){let e=document.getElementById("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2300)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8)}
+function monthKey(){return currentYear+"-"+String(currentMonth+1).padStart(2,"0")}
+function daysInMonth(){return new Date(currentYear,currentMonth+1,0).getDate()}
+function rec(studentId,day){
+ let k=monthKey();data.records[k]??={};data.records[k][studentId]??={days:{},notes:"",homework:"",participation:"",behavior:"",grade:""};
+ if(day!==undefined)data.records[k][studentId].days[day]??="";
+ return data.records[k][studentId];
+}
+function monthsInit(){
+ document.getElementById("monthSelect").innerHTML=monthNames.map((x,i)=>`<option value="${i}">${x}</option>`).join("");
+ document.getElementById("monthSelect").value=currentMonth;document.getElementById("yearInput").value=currentYear;
+}
+function populateGrades(){
+ const opts=data.settings.grades.map(g=>`<option>${esc(g)}</option>`).join("");
+ ["studentGrade","defaultGrade"].forEach(id=>document.getElementById(id).innerHTML=opts);
+ document.getElementById("studentGradeFilter").innerHTML='<option value="">كل الصفوف</option>'+opts;
+ document.getElementById("defaultGrade").value=data.settings.defaultGrade;
+}
+function renderStudents(){
+ const q=document.getElementById("studentSearch").value.trim().toLowerCase(),g=document.getElementById("studentGradeFilter").value;
+ let arr=data.students.filter(s=>(!q||s.name.toLowerCase().includes(q)||String(s.number||"").includes(q))&&(!g||s.grade===g));
+ document.getElementById("studentsBody").innerHTML=arr.length?arr.map((s,i)=>`<tr><td>${i+1}</td><td class="name">${esc(s.name)}</td><td>${esc(s.grade)}</td><td>${esc(s.section)}</td><td>${esc(s.number)}</td><td>${esc(s.phone)}</td><td>${esc(s.notes)}</td><td><button class="btn small" onclick="openStudentModal('${s.id}')">تعديل</button> <button class="btn small danger" onclick="deleteStudent('${s.id}')">حذف</button></td></tr>`).join(""):`<tr><td colspan="8" class="empty">لا يوجد طلاب</td></tr>`;
+ updateStudentLists();updateDashboard();
+}
+function openStudentModal(id=""){
+ document.getElementById("editStudentId").value=id;document.getElementById("modalTitle").textContent=id?"تعديل بيانات الطالب":"إضافة طالب";
+ let s=data.students.find(x=>x.id===id)||{name:"",grade:data.settings.defaultGrade,section:"أ",number:"",phone:"",notes:""};
+ studentName.value=s.name;studentGrade.value=s.grade;studentSection.value=s.section;studentNumber.value=s.number;studentPhone.value=s.phone;studentNotes.value=s.notes;
+ modalBack.classList.add("show");setTimeout(()=>studentName.focus(),50);
+}
+function closeModal(){modalBack.classList.remove("show")}
+function saveStudent(){
+ let name=studentName.value.trim();if(!name){toast("أدخل اسم الطالب");return}
+ let id=editStudentId.value;
+ let obj={id:id||uid(),name,grade:studentGrade.value,section:studentSection.value.trim(),number:studentNumber.value.trim(),phone:studentPhone.value.trim(),notes:studentNotes.value.trim()};
+ if(id){let i=data.students.findIndex(s=>s.id===id);if(i>=0)data.students[i]=obj}else data.students.push(obj);
+ saveData({snapshot:true});closeModal();renderAll();toast("تم حفظ الطالب");
+}
+function deleteStudent(id){
+ let s=data.students.find(x=>x.id===id);if(!s)return;
+ if(confirm("حذف الطالب «"+s.name+"»؟ ستبقى سجلاته القديمة محفوظة في النسخة الاحتياطية فقط.")){
+   data.students=data.students.filter(x=>x.id!==id);saveData({snapshot:true});renderAll();toast("تم حذف الطالب");
+ }
+}
+function statusCycle(v){return v===""?"✓":v==="✓"?"غ":v==="غ"?"ت":v==="ت"?"ع":""}
+function statusClass(v){return v==="✓"?"present":v==="غ"?"absent":v==="ت"?"late":v==="ع"?"leave":""}
+function renderAttendance(){
+ let q=attendanceSearch.value.trim().toLowerCase(),arr=data.students.filter(s=>!q||s.name.toLowerCase().includes(q)),d=daysInMonth();
+ let heads=Array.from({length:d},(_,i)=>`<th>${i+1}<br><small>${["أح","اث","ث","أر","خ","ج","س"][new Date(currentYear,currentMonth,i+1).getDay()]}</small></th>`).join("");
+ let body=arr.map((s,idx)=>{
+   let cells=Array.from({length:d},(_,i)=>{let day=i+1,v=(data.records[monthKey()]?.[s.id]?.days||{})[day]||"";return `<td><button class="att ${statusClass(v)}" title="انقر لتغيير الحالة" onclick="cycle('${s.id}',${day})">${v||"—"}</button></td>`}).join("");
+   let stats=getStats(s.id);return `<tr><td>${idx+1}</td><td class="name">${esc(s.name)}</td>${cells}<td>${stats.present}</td><td>${stats.absent}</td><td>${stats.late}</td><td>${stats.leave}</td></tr>`;
+ }).join("");
+ attendanceTable.innerHTML=`<table><thead><tr><th>#</th><th>اسم الطالب</th>${heads}<th>ح</th><th>غ</th><th>ت</th><th>ع</th></tr></thead><tbody>${body||'<tr><td colspan="40" class="empty">لا يوجد طلاب</td></tr>'}</tbody></table>`;
+}
+function cycle(id,day){let r=rec(id,day),v=r.days[day]||"";r.days[day]=statusCycle(v);touch();renderAttendance();refreshProfileReport();updateDashboard()}
+function getStats(id){
+ let r=data.records[monthKey()]?.[id];let vals=r?Object.values(r.days||{}):[];
+ return {present:vals.filter(x=>x==="✓").length,absent:vals.filter(x=>x==="غ").length,late:vals.filter(x=>x==="ت").length,leave:vals.filter(x=>x==="ع").length}
+}
+function updateDashboard(){
+ let total=data.students.length,st={present:0,absent:0,late:0,leave:0};
+ data.students.forEach(s=>{let x=getStats(s.id);for(let k in st)st[k]+=x[k]});
+ mStudents.textContent=total;mPresent.textContent=st.present;mAbsent.textContent=st.absent;mLate.textContent=st.late;
+ let need=data.students.filter(s=>getStats(s.id).absent>=3||data.records[monthKey()]?.[s.id]?.grade==="يحتاج متابعة").length;mNeed.textContent=need;
+ let denom=st.present+st.absent+st.late+st.leave,pct=denom?Math.round((st.present+st.late)/denom*100):0;
+ attendancePct.textContent=pct+"%";attendanceBar.style.width=pct+"%";dashMonth.textContent=monthNames[currentMonth]+" "+currentYear;
+ let rank=data.students.map(s=>({s,x:getStats(s.id)})).map(o=>({s:o.s,score:o.x.present*2+o.x.late-o.x.absent*2,p:o.x.present})).sort((a,b)=>b.score-a.score).slice(0,5);
+ topStudents.innerHTML=rank.length?rank.map((x,i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>${i+1}. ${esc(x.s.name)}</span><b>${x.p} حضور</b></div>`).join(""):"<div class='empty'>لا توجد بيانات بعد</div>";
+ let alertsHtml=data.students.filter(s=>getStats(s.id).absent>=3||data.records[monthKey()]?.[s.id]?.grade==="يحتاج متابعة").map(s=>{
+   let x=getStats(s.id),reason=[];if(x.absent>=3)reason.push(x.absent+" غياب");if(data.records[monthKey()]?.[s.id]?.grade==="يحتاج متابعة")reason.push("التقدير: يحتاج متابعة");
+   return `<div class="notice warn" style="margin-bottom:8px">الطالب <b>${esc(s.name)}</b> — ${reason.join("، ")}.</div>`;
+ }).join("");
+ document.getElementById("alerts").innerHTML=alertsHtml||"<div class='empty'>لا توجد تنبيهات حاليًا.</div>";
+}
+function updateStudentLists(){
+ const html='<option value="">اختر طالبًا</option>'+data.students.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+ let el=document.getElementById("profileStudent");
+ if(el){let old=el.value;el.innerHTML=html;if(data.students.some(s=>s.id===old))el.value=old;}
+ renderProfile();
+}
+
+function openPlacementModal(){
+ let id=document.getElementById("profileStudent")?.value;
+ if(!id){toast("اختر طالبًا أولًا من القائمة");return}
+ placementStudentId.value=id;
+ placementDate.value=new Date().toISOString().slice(0,10);
+ placementSkillsForm.innerHTML=SKILLS.map(sk=>`<div style="margin-bottom:12px"><label>${esc(sk.label)}</label><select id="pl_${sk.key}">${sk.desc.map((d,i)=>`<option value="${i}">${i} — ${esc(d)}</option>`).join("")}</select></div>`).join("");
+ placementNotes.value="";
+ placementModalBack.classList.add("show");
+}
+function closePlacementModal(){placementModalBack.classList.remove("show")}
+function savePlacement(){
+ let id=placementStudentId.value;if(!id)return;
+ let scores={},total=0;
+ SKILLS.forEach(sk=>{let v=+document.getElementById("pl_"+sk.key).value;scores[sk.key]=v;total+=v});
+ let band=recommendLevel(total);
+ let entry={id:uid(),date:placementDate.value||new Date().toISOString().slice(0,10),scores,total,level:band.label,badge:band.badge,notes:placementNotes.value.trim()};
+ data.levelAssessments[id]=data.levelAssessments[id]||[];
+ data.levelAssessments[id].unshift(entry);
+ saveData({snapshot:true});closePlacementModal();refreshProfileReport();toast("تم حفظ تقييم المستوى");
+}
+function deletePlacement(studentId,recId){
+ if(!confirm("حذف هذا التقييم؟ لا يمكن التراجع بعد الحذف."))return;
+ data.levelAssessments[studentId]=(data.levelAssessments[studentId]||[]).filter(x=>x.id!==recId);
+ saveData({snapshot:true});refreshProfileReport();toast("تم حذف التقييم");
+}
+
+function renderProfile(){
+ let elSel=document.getElementById("profileStudent");
+ if(!elSel)return;
+ let id=elSel.value,s=data.students.find(x=>x.id===id);
+ let formWrap=document.getElementById("profileFollowupForm");
+ if(!s){
+   if(formWrap)formWrap.style.display="none";
+   refreshProfileReport();
+   return;
+ }
+ if(formWrap)formWrap.style.display="";
+ let r=rec(id);
+ pfGrade.value=r.grade||"";pfHomework.value=r.homework||"";pfParticipation.value=r.participation||"";pfBehavior.value=r.behavior||"";pfNotes.value=r.notes||"";
+ refreshProfileReport();
+}
+function saveProfileFollowup(){
+ let id=document.getElementById("profileStudent")?.value;if(!id)return;let r=rec(id);
+ r.homework=pfHomework.value.trim();r.participation=pfParticipation.value.trim();r.behavior=pfBehavior.value.trim();r.notes=pfNotes.value.trim();r.grade=pfGrade.value;
+ saveData();updateDashboard();refreshProfileReport();
+}
+function scheduleProfileFollowupSave(){clearTimeout(profileTimer);setSaveStatus("جارٍ الحفظ...","yellow");profileTimer=setTimeout(saveProfileFollowup,350)}
+function refreshProfileReport(){
+ let out=document.getElementById("profileReport");
+ if(!out)return;
+ let id=document.getElementById("profileStudent")?.value,s=data.students.find(x=>x.id===id);
+ if(!s){out.innerHTML="<div class='panel'><div class='empty'>اختر طالبًا لعرض ملفه الشامل وتحديثه.</div></div>";return}
+ let r=rec(id);
+ let st=getStats(id),totalDays=st.present+st.absent+st.late+st.leave,pct=totalDays?Math.round((st.present+st.late)/totalDays*100):0;
+ let d=daysInMonth();
+ let dayRows=Array.from({length:d},(_,i)=>{let v=r.days?.[i+1]||"";return `<tr><td>${i+1}</td><td>${["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"][new Date(currentYear,currentMonth,i+1).getDay()]}</td><td><span class="badge ${v==="✓"?"green":v==="غ"?"red":v==="ت"?"yellow":v==="ع"?"blue":""}">${v||"—"}</span></td></tr>`}).join("");
+
+ let placeList=data.levelAssessments[id]||[];
+ let placementHtml;
+ if(placeList.length){
+   let latest=placeList[0];
+   placementHtml=`
+    <div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
+      <div class="kpi"><span>المجموع الكلي</span><b>${latest.total} / 30</b></div>
+      <div class="kpi"><span>المستوى الموصى به</span><b><span class="badge ${latest.badge}">${esc(latest.level)}</span></b></div>
+      <div class="kpi"><span>تاريخ آخر تقييم</span><b>${new Date(latest.date).toLocaleDateString("ar-SA")}</b></div>
+    </div>
+    <div class="table-wrap" style="margin-top:14px"><table style="min-width:0"><thead><tr><th>المهارة</th><th>الدرجة (من 5)</th><th>الوصف</th></tr></thead><tbody>
+     ${SKILLS.map(sk=>`<tr><td class="name">${esc(sk.label)}</td><td>${latest.scores[sk.key]}</td><td style="text-align:right;white-space:normal">${esc(sk.desc[latest.scores[sk.key]])}</td></tr>`).join("")}
+    </tbody></table></div>
+    ${latest.notes?`<div class="card" style="margin-top:12px"><b>ملاحظات التقييم:</b><p style="white-space:pre-wrap">${esc(latest.notes)}</p></div>`:""}
+    ${renderPlacementTrend(id,placeList)}
+   `;
+ }else{
+   placementHtml=`<div class="empty">لم يُجرَ تقييم مستوى للطالب بعد. استخدم زر «+ تقييم مستوى جديد» أعلاه لإضافة أول تقييم.</div>`;
+ }
+
+ out.innerHTML=`
+  <div class="panel report">
+   <div class="report-head">
+     <div><div class="report-title">${esc(data.settings.record||"ملف متابعة الطالب")}</div><div class="report-meta">${esc(data.settings.school)} ${data.settings.teacher?" — المعلم: "+esc(data.settings.teacher):""}<br>${monthNames[currentMonth]} ${currentYear}</div></div>
+     <div><b>${esc(s.name)}</b><br><span class="report-meta">${esc(s.grade)} — شعبة ${esc(s.section)} ${s.number?"— رقم "+esc(s.number):""}</span></div>
+   </div>
+   <div class="kpi-row"><div class="kpi"><span>الحضور</span><b>${st.present}</b></div><div class="kpi"><span>الغياب</span><b>${st.absent}</b></div><div class="kpi"><span>التأخر</span><b>${st.late}</b></div><div class="kpi"><span>الاستئذان</span><b>${st.leave}</b></div><div class="kpi"><span>نسبة الانتظام</span><b>${pct}%</b></div></div>
+   <div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px">
+     <div class="panel-title"><h3>الحضور اليومي</h3></div>
+     <div class="table-wrap"><table style="min-width:0"><thead><tr><th>اليوم</th><th>اسم اليوم</th><th>الحالة</th></tr></thead><tbody>${dayRows}</tbody></table></div>
+   </div>
+   <div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px">
+     <div class="panel-title"><h3>المتابعة الشهرية</h3>${r.grade?`<span class="badge blue">${esc(r.grade)}</span>`:""}</div>
+     <div class="grid2">
+       <div><label>الواجبات / الإنجاز</label><div class="card">${esc(r.homework||"—")}</div></div>
+       <div><label>المشاركة</label><div class="card">${esc(r.participation||"—")}</div></div>
+       <div><label>السلوك</label><div class="card">${esc(r.behavior||"—")}</div></div>
+       <div><label>ملاحظات الشهر</label><div class="card">${esc(r.notes||"—")}</div></div>
+     </div>
+   </div>
+   <div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px">
+     <div class="panel-title"><h3>تحديد المستوى في اللغة العربية</h3><button class="btn small no-print" onclick="openPlacementModal()">+ تقييم جديد</button></div>
+     ${placementHtml}
+   </div>
+   <div class="sig-row"><div>توقيع المعلم: ....................................</div><div>اعتماد الإدارة: ....................................</div></div>
+  </div>
+  ${placeList.length?`<div class="panel no-print" style="margin-top:16px">
+    <div class="panel-title"><h3>إدارة تقييمات المستوى (سجل داخلي، لا يُطبع)</h3></div>
+    <div class="table-wrap"><table><thead><tr><th>التاريخ</th><th>المجموع</th><th>المستوى</th><th>إجراءات</th></tr></thead><tbody>
+     ${placeList.map(en=>`<tr><td>${new Date(en.date).toLocaleDateString("ar-SA")}</td><td>${en.total}/30</td><td><span class="badge ${en.badge}">${esc(en.level)}</span></td><td><button class="btn small danger" onclick="deletePlacement('${id}','${en.id}')">حذف</button></td></tr>`).join("")}
+    </tbody></table></div>
+  </div>`:""}`;
+}
+
+function changeMonth(){currentMonth=+monthSelect.value;currentYear=+yearInput.value||new Date().getFullYear();renderAttendance();renderProfile();updateDashboard()}
+function saveSettings(){
+ data.settings.school=schoolName.value.trim();data.settings.teacher=teacherName.value.trim();data.settings.record=recordName.value.trim()||"نظام متابعة الطلاب";data.settings.defaultGrade=defaultGrade.value;
+ saveData({snapshot:true});toast("تم حفظ الإعدادات");renderAll();
+}
+function addGrade(){let x=newGrade.value.trim();if(!x)return;if(!data.settings.grades.includes(x))data.settings.grades.push(x);newGrade.value="";saveData();renderSettings();populateGrades();renderStudents()}
+function renderSettings(){
+ schoolName.value=data.settings.school||"";teacherName.value=data.settings.teacher||"";recordName.value=data.settings.record||"";
+ gradesList.innerHTML=data.settings.grades.map((g,i)=>`<span class="badge green" style="margin:4px">${esc(g)} ${i>0?`<button class="btn small" onclick="removeGrade(${i})">×</button>`:""}</span>`).join("");
+ brandTitle.textContent=data.settings.record||"نظام متابعة الطلاب";
+ let cidEl=document.getElementById("gdriveClientId");if(cidEl&&!cidEl.value)cidEl.value=getClientId();
+ let originEl=document.getElementById("originHint");if(originEl)originEl.textContent=location.origin;
+ renderGdriveStatus();
+}
+function removeGrade(i){
+ let g=data.settings.grades[i];
+ if(confirm("حذف الصف «"+g+"» من القوائم؟ سيُنقل الطلاب المسجّلون حاليًا في هذا الصف إلى الصف الافتراضي تلقائيًا.")){
+   data.settings.grades.splice(i,1);
+   if(data.settings.defaultGrade===g)data.settings.defaultGrade=data.settings.grades[0]||"";
+   data.students.forEach(s=>{if(s.grade===g)s.grade=data.settings.defaultGrade||""});
+   saveData();populateGrades();renderSettings();renderStudents();
+ }
+}
+
+function downloadBlob(content,type,name){
+ let blob=new Blob([content],{type}),a=document.createElement("a"),url=URL.createObjectURL(blob);a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function exportBackup(){
+ saveData();
+ let pack={schema:SCHEMA_VERSION,exportedAt:new Date().toISOString(),app:"نظام متابعة الطلاب",data};
+ downloadBlob(JSON.stringify(pack,null,2),"application/json;charset=utf-8","نسخة_احتياطية_نظام_المتابعة_"+new Date().toISOString().slice(0,10)+".json");toast("تم إنشاء النسخة الاحتياطية");
+}
+function validateImport(x){return x&&typeof x==="object"&&x.data&&Array.isArray(x.data.students)&&x.data.records&&typeof x.data.records==="object"}
+function importBackup(ev){
+ let file=ev.target.files[0];if(!file)return;let rd=new FileReader();
+ rd.onload=()=>{try{let x=JSON.parse(rd.result);if(!validateImport(x))throw new Error("invalid");if(confirm("سيتم إنشاء لقطة من بياناتك الحالية ثم استبدالها بالنسخة المستوردة. متابعة؟")){makeSnapshot(false);data=normalizeData(x.data);saveData({snapshot:true});renderAll();toast("تمت استعادة النسخة بنجاح")}}catch(e){alert("الملف غير صالح أو لا يطابق بنية نظام المتابعة.")}finally{ev.target.value=""}};
+ rd.readAsText(file);
+}
+function csvCell(v){v=String(v??"").replace(/"/g,'""');return `"${v}"`}
+function exportStudentsCSV(){
+ let rows=[["م","اسم الطالب","الصف","الشعبة","رقم الطالب","الهاتف","ملاحظات"],...data.students.map((s,i)=>[i+1,s.name,s.grade,s.section,s.number,s.phone,s.notes])];
+ let csv="﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");downloadBlob(csv,"text/csv;charset=utf-8","الطلاب_"+new Date().toISOString().slice(0,10)+".csv");
+}
+function exportAttendanceCSV(){
+ let d=daysInMonth(),head=["م","اسم الطالب",...Array.from({length:d},(_,i)=>i+1),"حضور","غياب","تأخر","استئذان"];
+ let rows=[head,...data.students.map((s,i)=>{let r=data.records[monthKey()]?.[s.id]?.days||{},st=getStats(s.id);return [i+1,s.name,...Array.from({length:d},(_,j)=>r[j+1]||""),st.present,st.absent,st.late,st.leave]})];
+ let csv="﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");downloadBlob(csv,"text/csv;charset=utf-8",`الحضور_${monthKey()}.csv`);
+}
+function getSnapshots(){try{return JSON.parse(localStorage.getItem(SNAP_KEY)||"[]")}catch(e){return []}}
+function makeSnapshot(showToast=false){
+ try{
+   let list=getSnapshots();list.unshift({id:uid(),at:new Date().toISOString(),data:clone(data)});list=list.slice(0,10);localStorage.setItem(SNAP_KEY,JSON.stringify(list));renderSnapshots();if(showToast)toast("تم إنشاء لقطة استرجاع");
+ }catch(e){if(showToast)toast("تعذر إنشاء اللقطة")}
+}
+function restoreSnapshot(id){
+ let s=getSnapshots().find(x=>x.id===id);if(!s)return;
+ if(confirm("استعادة هذه اللقطة واستبدال البيانات الحالية؟ سيتم إنشاء لقطة من وضعك الحالي أولًا احتياطًا.")){
+   makeSnapshot(false);data=normalizeData(s.data);saveData();renderAll();toast("تمت استعادة اللقطة")
+ }
+}
+function deleteSnapshot(id){let list=getSnapshots().filter(x=>x.id!==id);localStorage.setItem(SNAP_KEY,JSON.stringify(list));renderSnapshots()}
+function renderSnapshots(){
+ let list=getSnapshots();snapshotsList.innerHTML=list.length?list.map(s=>`<div class="snapshot"><div><b>${new Date(s.at).toLocaleString("ar-SA")}</b><div class="muted">${s.data.students?.length||0} طالب</div></div><div><button class="btn small primary" onclick="restoreSnapshot('${s.id}')">استعادة</button> <button class="btn small danger" onclick="deleteSnapshot('${s.id}')">حذف</button></div></div>`).join(""):"<div class='empty'>لا توجد لقطات بعد.</div>";
+}
+function clearAllData(){
+ if(confirm("تحذير: سيتم حذف جميع البيانات الأساسية واللقطات المحلية. هل أنت متأكد؟")&&confirm("تأكيد أخير: هل صدّرت نسخة JSON خارجية؟")){
+   localStorage.removeItem(KEY);localStorage.removeItem(OLD_KEY);localStorage.removeItem(SNAP_KEY);
+   if(gDriveConnected&&gDriveFileId){driveApiFetch(`https://www.googleapis.com/drive/v3/files/${gDriveFileId}`,{method:"DELETE"}).catch(()=>{});}
+   location.reload();
+ }
+}
+function updateStorageInfo(){
+ let b1=new Blob([localStorage.getItem(KEY)||""]).size,b2=new Blob([localStorage.getItem(SNAP_KEY)||""]).size;
+ storageInfo.textContent=`البيانات الأساسية: ${(b1/1024).toFixed(1)} KB — لقطات الاسترجاع: ${(b2/1024).toFixed(1)} KB — آخر حفظ: ${data.meta.updatedAt?new Date(data.meta.updatedAt).toLocaleString("ar-SA"):"لم يتم بعد"}`;
+}
+function updateSaveTime(){sideSaveTime.textContent=data.meta.updatedAt?"آخر حفظ: "+new Date(data.meta.updatedAt).toLocaleString("ar-SA"):"لم يتم الحفظ بعد"}
+function printPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("print-target"));document.getElementById(id).classList.add("print-target");window.print();setTimeout(()=>document.getElementById(id).classList.remove("print-target"),600)}
+function renderAll(){monthsInit();populateGrades();renderStudents();renderAttendance();renderSettings();renderSnapshots();updateDashboard();updateStorageInfo();updateSaveTime();renderProfile()}
+
+document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>{
+ document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+ document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.page).classList.add("active");pageTitle.textContent=b.textContent;
+ if(b.dataset.page==="attendance")renderAttendance();if(b.dataset.page==="profile")renderProfile();if(b.dataset.page==="backup"){renderSnapshots();updateStorageInfo()}if(b.dataset.page==="settings")renderSettings();
+}));
+window.addEventListener("beforeunload",()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}});
+window.addEventListener("storage",e=>{if(e.key===KEY&&e.newValue){try{data=normalizeData(JSON.parse(e.newValue));renderAll();toast("تم تحديث البيانات من نافذة أخرى")}catch(_){} }});
+document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();saveNow()}if(e.key==="Escape"){closeModal();closePlacementModal()}});
+
+/* ================= مزامنة Google Drive (مستقلة تمامًا عن Claude) ================= */
+const GOOGLE_DRIVE_FILENAME="بيانات_نظام_متابعة_الطلاب.json";
+const GDRIVE_CLIENTID_KEY="gdrive_client_id_v1";
+const GDRIVE_CONNECTED_KEY="gdrive_connected_v1";
+const GDRIVE_SCOPE="https://www.googleapis.com/auth/drive.file";
+let gTokenClient=null, gAccessToken=null, gDriveFileId=null, gDriveConnected=false, gDrivePollTimer=null, gLastKnownModified=null, gDrivePushTimer=null;
+
+function getClientId(){try{return (localStorage.getItem(GDRIVE_CLIENTID_KEY)||"").trim()}catch(e){return ""}}
+function setSyncStatus(t,c="blue"){let e=document.getElementById("syncStatus");if(e){e.textContent=t;e.className="badge "+c;e.style.display="";}}
+function renderGdriveStatus(){
+ let badge=document.getElementById("gdriveBadge"),txt=document.getElementById("gdriveStatusText");
+ if(!badge)return;
+ if(gDriveConnected){badge.textContent="متصل";badge.className="badge green";if(txt)txt.textContent="النظام متصل الآن بـ Google Drive ويُزامن تلقائيًا.";}
+ else{badge.textContent="غير متصل";badge.className="badge blue";if(txt)txt.textContent="لم يتم الاتصال بعد. أدخل الـ Client ID واضغط «حفظ واتصال».";}
+}
+function waitForGis(timeoutMs=6000){
+ return new Promise(res=>{
+   let start=Date.now();
+   (function chk(){
+     if(window.google&&google.accounts&&google.accounts.oauth2)return res(true);
+     if(Date.now()-start>timeoutMs)return res(false);
+     setTimeout(chk,150);
+   })();
+ });
+}
+function initGoogleTokenClient(cid){
+ if(!(window.google&&google.accounts&&google.accounts.oauth2))return null;
+ if(gTokenClient&&gTokenClient.__cid===cid)return gTokenClient;
+ gTokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:GDRIVE_SCOPE,callback:onGoogleTokenResponse});
+ gTokenClient.__cid=cid;
+ return gTokenClient;
+}
+function onGoogleTokenResponse(resp){
+ if(resp&&resp.access_token){
+   gAccessToken=resp.access_token;
+   gDriveConnected=true;
+   try{localStorage.setItem(GDRIVE_CONNECTED_KEY,"1")}catch(e){}
+   renderGdriveStatus();
+   setSyncStatus("جارٍ الاتصال بجوجل درايف...","blue");
+   driveInitialSync();
+ }else{
+   gDriveConnected=false;
+   renderGdriveStatus();
+   setSyncStatus("تعذر الاتصال بجوجل درايف","red");
+ }
+}
+async function connectGoogleDrive(){
+ let cid=(document.getElementById("gdriveClientId").value||"").trim();
+ if(!cid){toast("أدخل Client ID أولًا");return}
+ try{localStorage.setItem(GDRIVE_CLIENTID_KEY,cid)}catch(e){}
+ setSyncStatus("جارٍ تحميل مكتبة جوجل...","yellow");
+ let ok=await waitForGis();
+ if(!ok){toast("تعذر تحميل مكتبة جوجل (تحقق من الاتصال بالإنترنت)");setSyncStatus("تعذر تحميل مكتبة جوجل","red");return}
+ let tc=initGoogleTokenClient(cid);
+ if(!tc){toast("تعذر تهيئة الاتصال بجوجل");return}
+ tc.requestAccessToken({prompt:"consent"});
+}
+function disconnectGoogleDrive(){
+ try{
+   if(gAccessToken&&window.google&&google.accounts&&google.accounts.oauth2)google.accounts.oauth2.revoke(gAccessToken,()=>{});
+ }catch(e){}
+ gAccessToken=null;gDriveConnected=false;gDriveFileId=null;gLastKnownModified=null;
+ clearInterval(gDrivePollTimer);
+ try{localStorage.removeItem(GDRIVE_CONNECTED_KEY)}catch(e){}
+ setSyncStatus("نسخة محلية فقط","blue");
+ renderGdriveStatus();
+ toast("تم قطع الاتصال بجوجل درايف");
+}
+async function driveApiFetch(url,opts={}){
+ if(!gAccessToken)throw new Error("no_token");
+ opts.headers=Object.assign({},opts.headers,{Authorization:"Bearer "+gAccessToken});
+ let res=await fetch(url,opts);
+ if(res.status===401){gAccessToken=null;gDriveConnected=false;renderGdriveStatus();throw new Error("unauthorized")}
+ return res;
+}
+async function driveFindFile(){
+ let q=encodeURIComponent(`name='${GOOGLE_DRIVE_FILENAME}' and trashed=false`);
+ let res=await driveApiFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime)&spaces=drive`);
+ if(!res.ok)throw new Error("search_failed");
+ let json=await res.json();
+ return (json.files&&json.files[0])||null;
+}
+async function driveCreateFile(content){
+ let boundary="-------314159265358979323846";
+ let metadata={name:GOOGLE_DRIVE_FILENAME,mimeType:"application/json"};
+ let body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${content}\r\n--${boundary}--`;
+ let res=await driveApiFetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime",{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+boundary},body});
+ if(!res.ok)throw new Error("create_failed");
+ return res.json();
+}
+async function driveUpdateFile(fileId,content){
+ let res=await driveApiFetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=id,modifiedTime`,{method:"PATCH",headers:{"Content-Type":"application/json; charset=UTF-8"},body:content});
+ if(!res.ok)throw new Error("update_failed");
+ return res.json();
+}
+async function driveGetContent(fileId){
+ let res=await driveApiFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+ if(!res.ok)throw new Error("get_failed");
+ return res.text();
+}
+async function driveGetMeta(fileId){
+ let res=await driveApiFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=modifiedTime`);
+ if(!res.ok)throw new Error("meta_failed");
+ return res.json();
+}
+async function driveInitialSync(){
+ try{
+   let f=await driveFindFile();
+   if(f){
+     gDriveFileId=f.id;
+     let text=await driveGetContent(f.id);
+     data=normalizeData(JSON.parse(text));
+     localStorage.setItem(KEY,JSON.stringify(data));
+     gLastKnownModified=f.modifiedTime;
+     renderAll();
+   }else{
+     let created=await driveCreateFile(JSON.stringify(data));
+     gDriveFileId=created.id;
+     gLastKnownModified=created.modifiedTime;
+   }
+   setSyncStatus("متصل بجوجل درايف ✓","green");
+   renderGdriveStatus();
+   startDrivePolling();
+ }catch(e){
+   setSyncStatus("تعذر مزامنة جوجل درايف، يعمل النظام محليًا","red");
+ }
+}
+function scheduleCloudPush(){
+ if(!gDriveConnected||!gAccessToken)return;
+ clearTimeout(gDrivePushTimer);
+ setSyncStatus("جارٍ رفع التعديلات لجوجل درايف...","yellow");
+ gDrivePushTimer=setTimeout(async()=>{
+   try{
+     let content=JSON.stringify(data);
+     let res=gDriveFileId?await driveUpdateFile(gDriveFileId,content):await driveCreateFile(content);
+     gDriveFileId=res.id;gLastKnownModified=res.modifiedTime;
+     setSyncStatus("متصل بجوجل درايف ✓","green");
+   }catch(e){
+     setSyncStatus("تعذر رفع آخر تعديل لجوجل درايف","red");
+   }
+ },600);
+}
+function startDrivePolling(){
+ clearInterval(gDrivePollTimer);
+ gDrivePollTimer=setInterval(async()=>{
+   if(!gDriveConnected||!gAccessToken||!gDriveFileId)return;
+   try{
+     let meta=await driveGetMeta(gDriveFileId);
+     if(meta.modifiedTime&&meta.modifiedTime!==gLastKnownModified){
+       gLastKnownModified=meta.modifiedTime;
+       let text=await driveGetContent(gDriveFileId);
+       data=normalizeData(JSON.parse(text));
+       localStorage.setItem(KEY,JSON.stringify(data));
+       renderAll();
+       toast("تم تحديث البيانات من جهاز آخر عبر جوجل درايف");
+     }
+   }catch(e){}
+ },20000);
+}
+async function tryAutoReconnectDrive(){
+ try{
+   if(localStorage.getItem(GDRIVE_CONNECTED_KEY)!=="1")return;
+ }catch(e){return}
+ let cid=getClientId();if(!cid)return;
+ let ok=await waitForGis();if(!ok)return;
+ let tc=initGoogleTokenClient(cid);if(!tc)return;
+ tc.requestAccessToken({prompt:""});
+}
+
+renderAll();
+if(!data.meta.updatedAt)saveData();
+tryAutoReconnectDrive();
+</script>
+</body>
+</html>
