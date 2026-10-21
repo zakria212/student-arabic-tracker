@@ -18,8 +18,8 @@ export default function Debts() {
   const views = useDebtViews();
   const { settings } = useSettings();
   const [params, setParams] = useSearchParams();
-  const direction: DebtDirection = params.get('d') === 'borrowed' ? 'borrowed' : 'lent';
-  const setDirection = (d: DebtDirection) => setParams(d === 'lent' ? {} : { d }, { replace: true });
+  const direction: DebtDirection = params.get('d') === 'lent' ? 'lent' : 'borrowed';
+  const setDirection = (d: DebtDirection) => setParams(d === 'borrowed' ? {} : { d }, { replace: true });
   const [showSettled, setShowSettled] = useState(false);
   const [q, setQ] = useState('');
   const [openId, setOpenId] = useState<string | null>(null);
@@ -46,31 +46,31 @@ export default function Debts() {
 
       {lent && borrowed && (
         <div className="grid grid-cols-2 gap-3">
-          <button onClick={() => setDirection('lent')} className={`card p-4 text-start transition ${direction === 'lent' ? 'ring-2 ring-income/60' : ''}`}>
-            <div className="flex items-center gap-2 text-sm font-medium text-income dark:text-[#4FC7A6]">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-income-soft dark:bg-[#123a31]"><ArrowDownLeft className="h-4 w-4" /></span>
-              لك عند الآخرين
-            </div>
-            <Money minor={lent.remainingMinor} className="mt-3 block font-display text-xl font-bold" />
-            <div className="muted mt-1 text-xs">
-              {n(lent.openCount)} دين مفتوح{lent.overdueCount > 0 && <span className="font-semibold text-expense"> · {n(lent.overdueCount)} متأخر</span>}
-            </div>
-          </button>
           <button onClick={() => setDirection('borrowed')} className={`card p-4 text-start transition ${direction === 'borrowed' ? 'ring-2 ring-expense/60' : ''}`}>
             <div className="flex items-center gap-2 text-sm font-medium text-expense dark:text-[#EE8C92]">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-expense-soft dark:bg-[#3a1d20]"><ArrowUpRight className="h-4 w-4" /></span>
-              عليك للآخرين
+              أخذت (عليك)
             </div>
             <Money minor={borrowed.remainingMinor} className="mt-3 block font-display text-xl font-bold" />
             <div className="muted mt-1 text-xs">
               {n(borrowed.openCount)} دين مفتوح{borrowed.overdueCount > 0 && <span className="font-semibold text-expense"> · {n(borrowed.overdueCount)} متأخر</span>}
             </div>
           </button>
+          <button onClick={() => setDirection('lent')} className={`card p-4 text-start transition ${direction === 'lent' ? 'ring-2 ring-income/60' : ''}`}>
+            <div className="flex items-center gap-2 text-sm font-medium text-income dark:text-[#4FC7A6]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-income-soft dark:bg-[#123a31]"><ArrowDownLeft className="h-4 w-4" /></span>
+              أعطيت (لك)
+            </div>
+            <Money minor={lent.remainingMinor} className="mt-3 block font-display text-xl font-bold" />
+            <div className="muted mt-1 text-xs">
+              {n(lent.openCount)} دين مفتوح{lent.overdueCount > 0 && <span className="font-semibold text-expense"> · {n(lent.overdueCount)} متأخر</span>}
+            </div>
+          </button>
         </div>
       )}
 
       <div role="tablist" aria-label="نوع الدين" className="card grid grid-cols-2 gap-1 p-1">
-        {(['lent', 'borrowed'] as const).map((d) => (
+        {(['borrowed', 'lent'] as const).map((d) => (
           <button
             key={d}
             role="tab"
@@ -101,8 +101,8 @@ export default function Debts() {
         <div className="card">
           <EmptyState
             icon={<HandCoins className="h-9 w-9" />}
-            title={q ? 'لا نتائج مطابقة' : direction === 'lent' ? 'لا أحد مدين لك حاليًا' : 'لا ديون عليك حاليًا'}
-            text={q ? undefined : direction === 'lent' ? 'سجّل المبالغ التي أخذها منك الآخرون لتتابع سدادها.' : 'سجّل المبالغ التي أخذتها من الآخرين لتتذكر سدادها.'}
+            title={q ? 'لا نتائج مطابقة' : direction === 'lent' ? 'لا توجد مبالغ أعطيتها' : 'لا توجد مبالغ أخذتها'}
+            text={q ? undefined : direction === 'lent' ? 'سجّل المبالغ التي أعطيتها لغيرك لتتابع استردادها.' : 'سجّل المبالغ التي أخذتها من غيرك لتتذكر سدادها.'}
             action={!q && <button className="btn-primary" onClick={() => setForm({})}><Plus className="h-5 w-5" /> دين جديد</button>}
           />
         </div>
@@ -204,16 +204,16 @@ function DebtForm({ debt, defaultDirection, onClose, onSaved }: { debt?: DebtVie
     >
       <div className="space-y-4">
         <div role="radiogroup" aria-label="نوع الدين" className="grid grid-cols-2 gap-2">
-          {(['lent', 'borrowed'] as const).map((d) => (
+          {(['borrowed', 'lent'] as const).map((d) => (
             <button key={d} type="button" role="radio" aria-checked={direction === d} onClick={() => setDirection(d)}
               className={`rounded-xl border p-3 text-start transition ${direction === d ? (d === 'lent' ? 'border-income bg-income-soft dark:bg-[#123a31]' : 'border-expense bg-expense-soft dark:bg-[#3a1d20]') : 'line'}`}>
-              <span className="block font-semibold">{d === 'lent' ? 'شخص أخذ مني' : 'أخذتُ من شخص'}</span>
-              <span className="muted text-xs">{d === 'lent' ? 'المبلغ لي عنده' : 'المبلغ عليّ له'}</span>
+              <span className="block font-semibold">{d === 'lent' ? 'أعطيت' : 'أخذت'}</span>
+              <span className="muted text-xs">{d === 'lent' ? 'أعطيت شخصًا مبلغًا (لي عنده)' : 'أخذت من شخص مبلغًا (عليّ له)'}</span>
             </button>
           ))}
         </div>
         <label className="block">
-          <span className="label">{direction === 'lent' ? 'من أخذ منك؟' : 'ممن أخذت؟'} <span className="text-expense">*</span></span>
+          <span className="label">{direction === 'lent' ? 'لمن أعطيت؟' : 'ممن أخذت؟'} <span className="text-expense">*</span></span>
           <input id="debt-person" className="field" value={person} onChange={(e) => setPerson(e.target.value)} list="debt-people" maxLength={60} placeholder="اسم الشخص" aria-invalid={!!errors.person} />
           <datalist id="debt-people">{people.map((p) => <option key={p} value={p} />)}</datalist>
           {errors.person && <span className="mt-1 block text-sm text-expense" role="alert">{errors.person}</span>}
@@ -297,7 +297,7 @@ function DebtDetails({ v, onClose, onEdit }: { v: DebtView; onClose: () => void;
         <div className="space-y-5">
           <div className={`rounded-2xl p-4 ${lent ? 'bg-income-soft dark:bg-[#123a31]' : 'bg-expense-soft dark:bg-[#3a1d20]'}`}>
             <div className="flex items-center justify-between gap-2">
-              <span className="text-sm font-semibold">{lent ? `${v.person} أخذ منك (لك عنده)` : `أخذتَ من ${v.person} (عليك له)`}</span>
+              <span className="text-sm font-semibold">{lent ? `أعطيت ${v.person} (لك عنده)` : `أخذت من ${v.person} (عليك له)`}</span>
               <StatusPill v={v} />
             </div>
             <div className="mt-3 grid grid-cols-3 gap-2 text-center">
