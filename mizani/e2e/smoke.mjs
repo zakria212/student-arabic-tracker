@@ -150,6 +150,64 @@ await page.pdf({ path: `${OUT}/report.pdf`, format: 'A4' }).catch(() => {});
 await page.emulateMedia({ media: 'screen' });
 log('التقارير وصفحة الطباعة');
 
+// ── الأقسام: مصروف في قسم العمل وتصفية الإجماليات
+await page.goto(BASE + '#/transactions/new');
+await page.fill('#amount', '120');
+await page.fill('#details', 'أدوات مكتبية');
+await page.getByRole('radio', { name: 'تسوق' }).click();
+await page.getByRole('radio', { name: 'العمل' }).click();
+await page.getByRole('button', { name: 'حفظ الحركة' }).click();
+await page.waitForSelector('text=تم تسجيل المصروف');
+await page.goto(BASE + '#/');
+await page.getByRole('button', { name: 'العمل', exact: true }).click();
+await page.waitForSelector('text=أدوات مكتبية');
+assert(!(await page.locator('text=وجبة غداء').count()), 'تصفية القسم تخفي حركات الأقسام الأخرى');
+net = await netText();
+assert(net.includes('120.00'), 'صافي قسم العمل −120: ' + net);
+await page.screenshot({ path: `${OUT}/12-section-filter.png` });
+await page.getByRole('button', { name: 'كل الأقسام' }).click();
+log('الأقسام: الإضافة في قسم العمل والتصفية بالقسم');
+
+// ── الديون
+await page.goto(BASE + '#/debts');
+await page.waitForSelector('text=لا أحد مدين لك حاليًا');
+await page.getByRole('button', { name: 'دين جديد' }).first().click();
+await page.fill('#debt-person', 'أحمد');
+await page.fill('#debt-amount', '500');
+await page.fill('#debt-date', '2026-09-20');
+await page.fill('#debt-due', '2026-10-01');
+await page.getByRole('button', { name: 'حفظ الدين' }).click();
+await page.waitForSelector('text=تم تسجيل الدين');
+await page.waitForSelector('text=/متأخر منذ/');
+await page.getByRole('button', { name: /أحمد/ }).click();
+await page.fill('#pay-amount', '200');
+await page.getByRole('button', { name: 'إضافة دفعة' }).click();
+await page.waitForSelector('text=تم تسجيل الدفعة');
+await page.fill('#pay-amount', '400');
+await page.getByRole('button', { name: 'إضافة دفعة' }).click();
+await page.waitForSelector('text=مبلغ السداد أكبر من المتبقي');
+await page.screenshot({ path: `${OUT}/13-debt-details.png` });
+await page.keyboard.press('Escape');
+await page.getByRole('tab', { name: /عليّ للناس/ }).click();
+await page.getByRole('button', { name: 'دين جديد' }).first().click();
+await page.fill('#debt-person', 'خالد');
+await page.fill('#debt-amount', '100');
+await page.getByRole('button', { name: 'حفظ الدين' }).click();
+await page.waitForSelector('text=تم تسجيل الدين');
+await page.getByRole('button', { name: /خالد/ }).click();
+await page.getByRole('button', { name: 'سداد كامل المتبقي' }).click();
+await page.waitForSelector('text=تم تسديد الدين بالكامل');
+await page.keyboard.press('Escape');
+await page.waitForSelector('text=لا ديون عليك حاليًا');
+const debtsText = await page.locator('main').innerText();
+assert(debtsText.includes('300.00'), 'المتبقي لك 300: ' + debtsText.slice(0, 200));
+await noHScroll('الديون');
+await page.getByRole('tab', { name: /لي عند الناس/ }).click();
+await page.screenshot({ path: `${OUT}/14-debts-mobile.png`, fullPage: true });
+await page.goto(BASE + '#/');
+await page.waitForSelector('text=لك عند الآخرين');
+log('الديون: لي/عليّ، السداد الجزئي والكامل، التأخر، ومنع السداد الزائد');
+
 // ── نسخة احتياطية ثم مسح ثم استعادة
 await page.goto(BASE + '#/settings');
 const [bk] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: /تنزيل نسخة احتياطية/ }).click()]);
@@ -173,7 +231,9 @@ await page.goto(BASE + '#/');
 await page.getByRole('button', { name: /مصروف: وجبة غداء/ }).click();
 await page.waitForSelector('button[aria-label="فتح المرفق فاتورة.png"]');
 await page.keyboard.press('Escape');
-log('النسخ الاحتياطي ← المسح ← الاستعادة، والدمج لا يكرر');
+await page.goto(BASE + '#/debts');
+await page.waitForSelector('text=أحمد');
+log('النسخ الاحتياطي ← المسح ← الاستعادة (مع الديون والأقسام)، والدمج لا يكرر');
 
 // ── الوضع الداكن ولقطات الحاسوب
 await page.setViewportSize({ width: 1280, height: 860 });

@@ -1,5 +1,5 @@
 import { Paperclip } from 'lucide-react';
-import type { Category, Transaction } from '../db/types';
+import type { Category, Section, Transaction } from '../db/types';
 import { TYPE_LABEL } from '../db/types';
 import { formatDateAr } from '../lib/dates';
 import { useSettings } from '../state/settings';
@@ -10,11 +10,12 @@ type Props = {
   tx: Transaction;
   category?: Category;
   receipts?: number;
+  section?: Section;
   showDate?: boolean;
   onOpen: (id: string) => void;
 };
 
-export function TransactionRow({ tx, category, receipts = 0, showDate = true, onOpen }: Props) {
+export function TransactionRow({ tx, category, receipts = 0, section, showDate = true, onOpen }: Props) {
   const { settings } = useSettings();
   const income = tx.type === 'income';
   return (
@@ -37,6 +38,7 @@ export function TransactionRow({ tx, category, receipts = 0, showDate = true, on
           </span>
           <span className="muted block truncate text-xs leading-5">
             {category?.name ?? 'تصنيف محذوف'}
+            {section && <> · {section.name}</>}
             {showDate && <> · {formatDateAr(tx.date, settings.numerals)}</>}
           </span>
         </span>

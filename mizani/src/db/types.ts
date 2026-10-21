@@ -13,8 +13,52 @@ export type Transaction = {
   date: string;
   notes?: string;
   paymentMethod?: PaymentMethod;
+  /** القسم الاختياري (المنزل، العمل…) */
+  sectionId?: string;
   createdAt: string;
   updatedAt: string;
+};
+
+/** قسم يجمع الحركات حسب السياق، مثل المنزل أو العمل */
+export type Section = {
+  id: string;
+  name: string;
+  icon: string;
+  color: string;
+  isActive: boolean;
+  order: number;
+};
+
+/** lent: أخذه مني شخص (لي عنده) · borrowed: أخذته من شخص (عليّ له) */
+export type DebtDirection = 'lent' | 'borrowed';
+
+export type Debt = {
+  id: string;
+  direction: DebtDirection;
+  person: string;
+  amountMinor: number;
+  /** تاريخ الدين YYYY-MM-DD */
+  date: string;
+  /** تاريخ الاستحقاق الاختياري */
+  dueDate?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+/** دفعة سداد جزئية أو كاملة لدين */
+export type DebtPayment = {
+  id: string;
+  debtId: string;
+  amountMinor: number;
+  date: string;
+  notes?: string;
+  createdAt: string;
+};
+
+export const DEBT_LABEL: Record<DebtDirection, { tab: string; who: string; total: string }> = {
+  lent: { tab: 'لي عند الناس', who: 'من أخذ مني', total: 'لك عند الآخرين' },
+  borrowed: { tab: 'عليّ للناس', who: 'من أخذت منه', total: 'عليك للآخرين' },
 };
 
 export type Category = {

@@ -1,4 +1,4 @@
-import type { Category, PaymentMethod, Transaction, TransactionType } from '../db/types';
+import type { Category, PaymentMethod, Section, Transaction, TransactionType } from '../db/types';
 import { addDays, diffDays, inRange, MONTHS_AR, parseISODate, toISODate, type ISODate } from '../lib/dates';
 
 export type Filters = {
@@ -7,6 +7,8 @@ export type Filters = {
   type?: TransactionType | 'all';
   categoryId?: string | 'all';
   paymentMethod?: PaymentMethod | 'all';
+  /** 'none' = حركات بلا قسم */
+  sectionId?: string | 'all' | 'none';
   search?: string;
 };
 
@@ -30,6 +32,9 @@ export function filterTransactions(txs: Transaction[], f: Filters): Transaction[
     if (f.type && f.type !== 'all' && t.type !== f.type) return false;
     if (f.categoryId && f.categoryId !== 'all' && t.categoryId !== f.categoryId) return false;
     if (f.paymentMethod && f.paymentMethod !== 'all' && t.paymentMethod !== f.paymentMethod) return false;
+    if (f.sectionId && f.sectionId !== 'all') {
+      if (f.sectionId === 'none' ? !!t.sectionId : t.sectionId !== f.sectionId) return false;
+    }
     if (q) {
       const hay = normalizeArabic(`${t.details} ${t.notes ?? ''}`);
       if (!hay.includes(q)) return false;
@@ -147,4 +152,24 @@ export function groupByDay(txs: Transaction[]): { date: ISODate; items: Transact
     g.netMinor += t.type === 'income' ? t.amountMinor : -t.amountMinor;
   }
   return groups;
+}
+
+export type SectionShare = { sectionId: string; name: string; color: string; icon: string; incomeMinor: number; expenseMinor: number; count: number };
+
+/** الدخل والمصروفات لكل قسم، مع «بدون قسم» للحركات غير المصنفة */
+export function bySection(txs: Transaction[], sections: Section[]): SectionShare[] {
+  const byId = new Map(sections.map((s) => [s.id, s]));
+  const map = new Map<string, SectionShare>();
+  for (const t of txs) {
+    const key = t.sectionId && byId.has(t.sectionId) ? t.sectionId : 'none';
+    let e = map.get(key);
+    if (!e) {
+      const s = byId.get(key);
+      e = { sectionId: key, name: s?.name ?? 'بدون قسم', color: s?.color ?? '#8A979C', icon: s?.icon ?? 'circle-ellipsis', incomeMinor: 0, expenseMinor: 0, count: 0 };
+      map.set(key, e);
+    }
+    if (t.type === 'income') e.incomeMinor += t.amountMinor; else e.expenseMinor += t.amountMinor;
+    e.count++;
+  }
+  return [...map.values()].sort((a, b) => (a.sectionId === 'none' ? 1 : b.sectionId === 'none' ? -1 : b.expenseMinor - a.expenseMinor));
 }

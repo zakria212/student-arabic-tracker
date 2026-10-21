@@ -1,7 +1,7 @@
 import JSZip from 'jszip';
 import { z } from 'zod';
 import { db, DATA_SCHEMA_VERSION } from '../db/db';
-import type { Category, Receipt, Settings, Transaction } from '../db/types';
+import type { Category, Debt, DebtPayment, Receipt, Section, Settings, Transaction } from '../db/types';
 import { DEFAULT_SETTINGS } from '../db/types';
 import { isValidISODate } from '../lib/dates';
 
@@ -24,8 +24,39 @@ const txSchema = z.object({
   date: z.string().refine(isValidISODate, 'تاريخ غير صالح'),
   notes: z.string().optional(),
   paymentMethod: z.enum(['cash', 'bank', 'card', 'other']).optional(),
+  sectionId: z.string().min(1).optional(),
   createdAt: z.string(),
   updatedAt: z.string(),
+});
+
+const sectionSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  icon: z.string(),
+  color: z.string(),
+  isActive: z.boolean(),
+  order: z.number(),
+});
+
+const debtSchema = z.object({
+  id: z.string().min(1),
+  direction: z.enum(['lent', 'borrowed']),
+  person: z.string().min(1),
+  amountMinor: z.number().int().positive().max(100_000_000_000),
+  date: z.string().refine(isValidISODate, 'تاريخ غير صالح'),
+  dueDate: z.string().refine(isValidISODate, 'تاريخ غير صالح').optional(),
+  notes: z.string().optional(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+const debtPaymentSchema = z.object({
+  id: z.string().min(1),
+  debtId: z.string().min(1),
+  amountMinor: z.number().int().positive(),
+  date: z.string().refine(isValidISODate, 'تاريخ غير صالح'),
+  notes: z.string().optional(),
+  createdAt: z.string(),
 });
 
 const catSchema = z.object({
@@ -63,15 +94,22 @@ const backupSchema = z.object({
   categories: z.array(catSchema),
   transactions: z.array(txSchema),
   receipts: z.array(receiptMetaSchema),
+  // أُضيفت في الإصدار 2 — اختيارية لقبول نسخ الإصدار 1
+  sections: z.array(sectionSchema).optional(),
+  debts: z.array(debtSchema).optional(),
+  debtPayments: z.array(debtPaymentSchema).optional(),
 });
 
 export type BackupFile = z.infer<typeof backupSchema>;
 
 export async function createBackup(): Promise<{ bytes: Uint8Array; filename: string; counts: { transactions: number; receipts: number } }> {
-  const [transactions, categories, receipts, settings] = await db.transaction(
+  const [transactions, categories, receipts, settings, sections, debts, debtPayments] = await db.transaction(
     'r',
-    [db.transactions, db.categories, db.receipts, db.settings],
-    () => Promise.all([db.transactions.toArray(), db.categories.toArray(), db.receipts.toArray(), db.settings.get('app')]),
+    [db.transactions, db.categories, db.receipts, db.settings, db.sections, db.debts, db.debtPayments],
+    () => Promise.all([
+      db.transactions.toArray(), db.categories.toArray(), db.receipts.toArray(), db.settings.get('app'),
+      db.sections.toArray(), db.debts.toArray(), db.debtPayments.toArray(),
+    ]),
   );
 
   const zip = new JSZip();
@@ -86,6 +124,9 @@ export async function createBackup(): Promise<{ bytes: Uint8Array; filename: str
     },
     categories,
     transactions,
+    sections,
+    debts,
+    debtPayments,
     receipts: receipts.map((r) => {
       const path = `receipts/${r.id}.${extFor(r.mimeType)}`;
       zip.file(path, r.data);
@@ -109,6 +150,7 @@ export type ParsedBackup = {
     transactions: number;
     receipts: number;
     categories: number;
+    debts: number;
     exportedAt: string;
     range?: { start: string; end: string };
     currency: string;
@@ -141,7 +183,10 @@ export async function parseBackup(file: ArrayBuffer | Uint8Array | Blob): Promis
 
   // سلامة المراجع
   const unique = (arr: { id: string }[]) => new Set(arr.map((x) => x.id)).size === arr.length;
-  if (!unique(meta.transactions) || !unique(meta.categories) || !unique(meta.receipts)) {
+  const sections = meta.sections ?? [];
+  const debts = meta.debts ?? [];
+  const debtPayments = meta.debtPayments ?? [];
+  if (!unique(meta.transactions) || !unique(meta.categories) || !unique(meta.receipts) || !unique(sections) || !unique(debts) || !unique(debtPayments)) {
     throw new BackupError('النسخة تحتوي معرّفات مكررة');
   }
   const catIds = new Set(meta.categories.map((c) => c.id));
@@ -150,6 +195,12 @@ export async function parseBackup(file: ArrayBuffer | Uint8Array | Blob): Promis
     const c = meta.categories.find((x) => x.id === t.categoryId)!;
     if (c.type !== t.type) throw new BackupError('تعارض بين نوع حركة ونوع تصنيفها');
   }
+  const sectionIds = new Set(sections.map((x) => x.id));
+  if (meta.transactions.some((t) => t.sectionId && !sectionIds.has(t.sectionId))) {
+    throw new BackupError('حركة تشير إلى قسم غير موجود في النسخة');
+  }
+  const debtIds = new Set(debts.map((d) => d.id));
+  if (debtPayments.some((p) => !debtIds.has(p.debtId))) throw new BackupError('دفعة سداد لا تتبع أي دين في النسخة');
   const txIds = new Set(meta.transactions.map((t) => t.id));
   const receiptData = new Map<string, ArrayBuffer>();
   for (const r of meta.receipts) {
@@ -167,6 +218,7 @@ export async function parseBackup(file: ArrayBuffer | Uint8Array | Blob): Promis
       transactions: meta.transactions.length,
       receipts: meta.receipts.length,
       categories: meta.categories.length,
+      debts: debts.length,
       exportedAt: meta.exportedAt,
       range: dates.length ? { start: dates[0], end: dates[dates.length - 1] } : undefined,
       currency: meta.settings?.currency ?? 'SAR',
@@ -175,7 +227,7 @@ export async function parseBackup(file: ArrayBuffer | Uint8Array | Blob): Promis
 }
 
 export type ImportMode = 'replace' | 'merge';
-export type ImportResult = { addedTransactions: number; skippedTransactions: number; addedReceipts: number; addedCategories: number };
+export type ImportResult = { addedTransactions: number; skippedTransactions: number; addedReceipts: number; addedCategories: number; addedDebts: number };
 
 export async function applyBackup(parsed: ParsedBackup, mode: ImportMode): Promise<ImportResult> {
   const { meta, receiptData } = parsed;
@@ -190,25 +242,39 @@ export async function applyBackup(parsed: ParsedBackup, mode: ImportMode): Promi
     data: receiptData.get(r.id)!,
   }));
   const transactions: Transaction[] = meta.transactions;
+  const sections: Section[] = meta.sections ?? [];
+  const debts: Debt[] = meta.debts ?? [];
+  const debtPayments: DebtPayment[] = meta.debtPayments ?? [];
+  const isV1 = meta.sections === undefined;
 
-  return db.transaction('rw', [db.transactions, db.receipts, db.categories, db.settings], async () => {
+  const tables = [db.transactions, db.receipts, db.categories, db.settings, db.sections, db.debts, db.debtPayments];
+  return db.transaction('rw', tables, async () => {
     if (mode === 'replace') {
-      await Promise.all([db.transactions.clear(), db.receipts.clear(), db.categories.clear()]);
+      await Promise.all([db.transactions.clear(), db.receipts.clear(), db.categories.clear(), db.debts.clear(), db.debtPayments.clear()]);
+      // نسخة الإصدار 1 لا تحتوي أقسامًا، فنُبقي الأقسام الحالية
+      if (!isV1) {
+        await db.sections.clear();
+        await db.sections.bulkAdd(sections);
+      }
       await db.categories.bulkAdd(categories);
       await db.transactions.bulkAdd(transactions);
       await db.receipts.bulkAdd(receipts);
+      await db.debts.bulkAdd(debts);
+      await db.debtPayments.bulkAdd(debtPayments);
       const current = (await db.settings.get('app')) ?? DEFAULT_SETTINGS;
       const s: Settings = { ...current, key: 'app', currency: meta.settings?.currency ?? current.currency };
       if (meta.settings?.theme) s.theme = meta.settings.theme;
       if (meta.settings?.numerals) s.numerals = meta.settings.numerals;
       await db.settings.put(s);
-      return { addedTransactions: transactions.length, skippedTransactions: 0, addedReceipts: receipts.length, addedCategories: categories.length };
+      return { addedTransactions: transactions.length, skippedTransactions: 0, addedReceipts: receipts.length, addedCategories: categories.length, addedDebts: debts.length };
     }
 
     // الدمج: نضيف فقط ما لا يوجد معرّفه مسبقًا، دون تعديل سجلات المستخدم الحالية
     const existingCat = new Set(await db.categories.toCollection().primaryKeys());
     const newCats = categories.filter((c) => !existingCat.has(c.id));
     await db.categories.bulkAdd(newCats);
+    const existingSec = new Set(await db.sections.toCollection().primaryKeys());
+    await db.sections.bulkAdd(sections.filter((x) => !existingSec.has(x.id)));
 
     const existingTx = new Set(await db.transactions.toCollection().primaryKeys());
     const newTxs = transactions.filter((t) => !existingTx.has(t.id));
@@ -226,7 +292,15 @@ export async function applyBackup(parsed: ParsedBackup, mode: ImportMode): Promi
     const newReceipts = receipts.filter((r) => addedIds.has(r.transactionId) && !existingRc.has(r.id));
     await db.receipts.bulkAdd(newReceipts);
 
+    // الديون: نضيف غير الموجود فقط، ودفعاتها معها
+    const existingDebts = new Set(await db.debts.toCollection().primaryKeys());
+    const newDebts = debts.filter((d) => !existingDebts.has(d.id));
+    await db.debts.bulkAdd(newDebts);
+    const newDebtIds = new Set(newDebts.map((d) => d.id));
+    await db.debtPayments.bulkAdd(debtPayments.filter((p) => newDebtIds.has(p.debtId)));
+
     return {
+      addedDebts: newDebts.length,
       addedTransactions: newTxs.length,
       skippedTransactions: transactions.length - newTxs.length,
       addedReceipts: newReceipts.length,

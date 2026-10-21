@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { AlertTriangle, DatabaseBackup, Download, HardDrive, Loader2, Palette, ShieldCheck, Tags, Trash2, Upload, Coins } from 'lucide-react';
+import { AlertTriangle, DatabaseBackup, Download, FolderOpen, HardDrive, Loader2, Palette, ShieldCheck, Tags, Trash2, Upload, Coins } from 'lucide-react';
 import { CategoryManager } from '../components/CategoryManager';
+import { SectionManager } from '../components/SectionManager';
 import { ConfirmDialog, Sheet } from '../components/Sheet';
 import { updateSettings, wipeAllData } from '../db/repo';
 import type { Theme } from '../db/types';
@@ -13,7 +14,7 @@ import { useTransactionCount } from '../state/queries';
 import { useSettings } from '../state/settings';
 import { useToast } from '../state/toast';
 
-function Section({ icon, title, children, id }: { icon: ReactNode; title: string; children: ReactNode; id?: string }) {
+function Panel({ icon, title, children, id }: { icon: ReactNode; title: string; children: ReactNode; id?: string }) {
   return (
     <section className="card p-4 sm:p-5" aria-labelledby={id}>
       <h2 id={id} className="mb-4 flex items-center gap-2 text-base font-bold">
@@ -95,7 +96,7 @@ export default function SettingsPage() {
     <div className="space-y-5">
       <h1 className="text-2xl font-bold">الإعدادات</h1>
 
-      <Section icon={<Palette className="h-4 w-4" />} title="المظهر" id="s-look">
+      <Panel icon={<Palette className="h-4 w-4" />} title="المظهر" id="s-look">
         <div className="space-y-4">
           <div>
             <span className="label">السمة</span>
@@ -113,9 +114,9 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
-      </Section>
+      </Panel>
 
-      <Section icon={<Coins className="h-4 w-4" />} title="العملة" id="s-cur">
+      <Panel icon={<Coins className="h-4 w-4" />} title="العملة" id="s-cur">
         <label>
           <span className="label">عملة السجل</span>
           <select className="field" value={settings.currency} onChange={(e) => onCurrency(e.target.value)}>
@@ -123,13 +124,17 @@ export default function SettingsPage() {
           </select>
         </label>
         <p className="muted mt-2 text-xs leading-5">تُستخدم عملة واحدة لكامل السجل. تغيير العملة يغيّر الرمز المعروض فقط ولا يحوّل المبالغ بأسعار الصرف.</p>
-      </Section>
+      </Panel>
 
-      <Section icon={<Tags className="h-4 w-4" />} title="التصنيفات" id="s-cat">
+      <Panel icon={<FolderOpen className="h-4 w-4" />} title="الأقسام" id="s-sections">
+        <SectionManager />
+      </Panel>
+
+      <Panel icon={<Tags className="h-4 w-4" />} title="التصنيفات" id="s-cat">
         <CategoryManager />
-      </Section>
+      </Panel>
 
-      <Section icon={<DatabaseBackup className="h-4 w-4" />} title="النسخ الاحتياطي والاستعادة" id="s-backup">
+      <Panel icon={<DatabaseBackup className="h-4 w-4" />} title="النسخ الاحتياطي والاستعادة" id="s-backup">
         <div className="mb-4 flex gap-3 rounded-xl bg-gold-soft p-3 text-sm leading-6 text-[#5C4313] dark:bg-[#2a2516] dark:text-[#F3CF8E]">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
           <p>
@@ -148,11 +153,11 @@ export default function SettingsPage() {
         </div>
         <p className="muted mt-2 text-xs">
           {settings.lastBackupAt ? `آخر نسخة احتياطية: ${formatDateAr(settings.lastBackupAt.slice(0, 10), settings.numerals)}` : 'لم تُنشئ نسخة احتياطية بعد.'}
-          {' '}تتضمن النسخة الحركات والتصنيفات والإعدادات وصور الإيصالات.
+          {' '}تتضمن النسخة الحركات والديون والأقسام والتصنيفات والإعدادات وصور الإيصالات.
         </p>
-      </Section>
+      </Panel>
 
-      <Section icon={<HardDrive className="h-4 w-4" />} title="التخزين والخصوصية" id="s-storage">
+      <Panel icon={<HardDrive className="h-4 w-4" />} title="التخزين والخصوصية" id="s-storage">
         <ul className="space-y-2 text-sm leading-6">
           <li className="flex gap-2"><ShieldCheck className="mt-1 h-4 w-4 shrink-0 text-income" /> لا يرسل التطبيق بياناتك أو صورك إلى أي خادم أو خدمة تحليلات، ولا يتطلب حسابًا.</li>
           <li className="flex gap-2"><ShieldCheck className="mt-1 h-4 w-4 shrink-0 text-income" /> يعمل دون إنترنت بعد أول تحميل.</li>
@@ -167,11 +172,11 @@ export default function SettingsPage() {
             </div>
           )}
         </div>
-      </Section>
+      </Panel>
 
       <section className="card border-expense/40 p-4 sm:p-5">
         <h2 className="mb-2 flex items-center gap-2 text-base font-bold text-expense"><Trash2 className="h-4 w-4" /> مسح جميع البيانات</h2>
-        <p className="muted mb-3 text-sm leading-6">يحذف كل الحركات والمرفقات والتصنيفات المخصصة من هذا الجهاز نهائيًا. أنشئ نسخة احتياطية أولًا.</p>
+        <p className="muted mb-3 text-sm leading-6">يحذف كل الحركات والديون والمرفقات والأقسام والتصنيفات المخصصة من هذا الجهاز نهائيًا. أنشئ نسخة احتياطية أولًا.</p>
         <button className="btn-outline !text-expense" onClick={() => { setWipeText(''); setWipeOpen(true); }}>مسح جميع البيانات…</button>
       </section>
 
@@ -238,7 +243,7 @@ function ImportDialog({ parsed, onClose }: { parsed: ParsedBackup; onClose: () =
       toast(
         mode === 'replace'
           ? `تمت الاستعادة: ${n(r.addedTransactions)} حركة و${n(r.addedReceipts)} مرفق`
-          : `تم الدمج: أضيفت ${n(r.addedTransactions)} حركة، وتُجوهلت ${n(r.skippedTransactions)} موجودة مسبقًا`,
+          : `تم الدمج: أضيفت ${n(r.addedTransactions)} حركة و${n(r.addedDebts)} دين، وتُجوهلت ${n(r.skippedTransactions)} حركة موجودة مسبقًا`,
       );
       onClose();
     } catch (e) {
@@ -264,8 +269,8 @@ function ImportDialog({ parsed, onClose }: { parsed: ParsedBackup; onClose: () =
       }
     >
       <div className="space-y-4">
-        <div className="grid grid-cols-3 gap-2 text-center">
-          {[['حركة', p.transactions], ['مرفق', p.receipts], ['تصنيف', p.categories]].map(([l, v]) => (
+        <div className="grid grid-cols-2 gap-2 text-center sm:grid-cols-4">
+          {[['حركة', p.transactions], ['مرفق', p.receipts], ['دين', p.debts], ['تصنيف', p.categories]].map(([l, v]) => (
             <div key={l as string} className="rounded-xl p-3 surface-2">
               <div className="num font-display text-xl font-bold">{n(v as number)}</div>
               <div className="muted text-xs">{l}</div>

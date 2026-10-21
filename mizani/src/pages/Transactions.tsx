@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Download, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { PeriodPicker } from '../components/PeriodPicker';
+import { SectionChips } from '../components/SectionChips';
 import { TransactionRow } from '../components/TransactionRow';
 import { EmptyState } from '../components/EmptyState';
 import { Money } from '../components/Money';
@@ -11,7 +12,7 @@ import { PAYMENT_METHODS, type PaymentMethod, type TransactionType } from '../db
 import { formatDayHeading, todayISO, toDigits } from '../lib/dates';
 import { exportTransactionsCsv } from '../lib/exportCsv';
 import { resolvePeriod, usePeriod } from '../state/period';
-import { useCategories, useReceiptCounts, useTransactionsInRange } from '../state/queries';
+import { useCategories, useReceiptCounts, useSections, useTransactionsInRange } from '../state/queries';
 import { useSettings } from '../state/settings';
 import { useToast } from '../state/toast';
 
@@ -21,7 +22,9 @@ export default function Transactions() {
   const navigate = useNavigate();
   const toast = useToast();
   const { openDetails } = useDetails();
-  const { period } = usePeriod();
+  const { period, section } = usePeriod();
+  const sections = useSections() ?? [];
+  const secById = useMemo(() => new Map(sections.map((x) => [x.id, x])), [sections]);
   const { settings } = useSettings();
   const { start, end, label } = resolvePeriod(period, settings.numerals);
   const txs = useTransactionsInRange(start, end);
@@ -44,11 +47,11 @@ export default function Transactions() {
   const [showFilters, setShowFilters] = useState(categoryId !== 'all' || paymentMethod !== 'all');
   const [limit, setLimit] = useState(PAGE);
 
-  const filters: Filters = { type, categoryId, paymentMethod, search: q };
+  const filters: Filters = { type, categoryId, paymentMethod, search: q, sectionId: section };
   const filtered = useMemo(
     () => (txs ? sortNewestFirst(filterTransactions(txs, filters)) : []),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [txs, q, type, categoryId, paymentMethod],
+    [txs, q, type, categoryId, paymentMethod, section],
   );
   const summary = useMemo(() => summarize(filtered), [filtered]);
   const visible = filtered.slice(0, limit);
@@ -78,6 +81,7 @@ export default function Transactions() {
       </header>
 
       <PeriodPicker allowAll />
+      <SectionChips />
 
       <div className="flex gap-2">
         <label className="relative flex-1">
@@ -182,7 +186,7 @@ export default function Transactions() {
                 </div>
                 <ul>
                   {g.items.map((t) => (
-                    <TransactionRow key={t.id} tx={t} category={catById.get(t.categoryId)} receipts={receiptCounts.get(t.id)} showDate={false} onOpen={openDetails} />
+                    <TransactionRow key={t.id} tx={t} category={catById.get(t.categoryId)} receipts={receiptCounts.get(t.id)} section={t.sectionId ? secById.get(t.sectionId) : undefined} showDate={false} onOpen={openDetails} />
                   ))}
                 </ul>
               </section>
@@ -190,7 +194,7 @@ export default function Transactions() {
           ) : (
             <ul>
               {visible.map((t) => (
-                <TransactionRow key={t.id} tx={t} category={catById.get(t.categoryId)} receipts={receiptCounts.get(t.id)} onOpen={openDetails} />
+                <TransactionRow key={t.id} tx={t} category={catById.get(t.categoryId)} receipts={receiptCounts.get(t.id)} section={t.sectionId ? secById.get(t.sectionId) : undefined} onOpen={openDetails} />
               ))}
             </ul>
           )}

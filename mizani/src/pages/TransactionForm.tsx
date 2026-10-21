@@ -12,7 +12,8 @@ import { isValidISODate, todayISO } from '../lib/dates';
 import { minorToPlain, parseAmount } from '../lib/money';
 import { formatBytes, ImageError, prepareReceipt } from '../lib/image';
 import { CategoryIcon } from '../components/CategoryIcon';
-import { useCategories } from '../state/queries';
+import { useCategories, useSections } from '../state/queries';
+import { usePeriod } from '../state/period';
 import { useSettings } from '../state/settings';
 import { useToast } from '../state/toast';
 
@@ -25,6 +26,7 @@ const schema = z
     date: z.string().refine(isValidISODate, 'اختر تاريخًا صحيحًا'),
     notes: z.string().max(500, 'الملاحظات طويلة جدًا').optional(),
     paymentMethod: z.enum(['', 'cash', 'bank', 'card', 'other']),
+    sectionId: z.string(),
   })
   .superRefine((v, ctx) => {
     const r = parseAmount(v.amount);
@@ -49,6 +51,8 @@ export default function TransactionForm() {
   const toast = useToast();
   const { currency } = useSettings();
   const categories = useCategories();
+  const sections = useSections();
+  const { section: activeSection } = usePeriod();
   const isEdit = !!id;
 
   const existing = useLiveQuery(async () => {
@@ -61,11 +65,17 @@ export default function TransactionForm() {
   const initialType = (search.get('type') === 'income' ? 'income' : 'expense') as TransactionType;
   const { register, handleSubmit, control, watch, setValue, reset, formState: { errors, isSubmitting } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { type: initialType, amount: '', details: '', categoryId: '', date: todayISO(), notes: '', paymentMethod: '' },
+    defaultValues: {
+      type: initialType, amount: '', details: '', categoryId: '', date: todayISO(), notes: '', paymentMethod: '',
+      // عند الإضافة من داخل قسم مختار نقترحه افتراضيًا
+      sectionId: activeSection !== 'all' && activeSection !== 'none' ? activeSection : '',
+    },
   });
 
   const type = watch('type');
   const categoryId = watch('categoryId');
+  const sectionId = watch('sectionId');
+  const sectionOptions = (sections ?? []).filter((x) => x.isActive || x.id === sectionId);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [removed, setRemoved] = useState<string[]>([]);
   const [processing, setProcessing] = useState(false);
@@ -86,6 +96,7 @@ export default function TransactionForm() {
       date: t.date,
       notes: t.notes ?? '',
       paymentMethod: t.paymentMethod ?? '',
+      sectionId: t.sectionId ?? '',
     });
     setAttachments(
       existing.receipts.map((r) => ({
@@ -166,6 +177,7 @@ export default function TransactionForm() {
           date: v.date,
           notes: v.notes,
           paymentMethod: (v.paymentMethod || undefined) as PaymentMethod | undefined,
+          sectionId: v.sectionId || undefined,
         },
         attachments.filter((a): a is Extract<Attachment, { kind: 'new' }> => a.kind === 'new').map((a) => a.receipt),
         removed,
@@ -288,6 +300,29 @@ export default function TransactionForm() {
           />
           {errors.categoryId && <p className="mt-1.5 text-sm text-expense" role="alert">{errors.categoryId.message}</p>}
         </fieldset>
+
+        {sectionOptions.length > 0 && (
+          <fieldset>
+            <legend className="label">القسم <span className="muted text-xs">(اختياري)</span></legend>
+            <Controller
+              control={control}
+              name="sectionId"
+              render={({ field }) => (
+                <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="القسم">
+                  <button type="button" role="radio" aria-checked={field.value === ''} aria-pressed={field.value === ''} className="chip" onClick={() => field.onChange('')}>
+                    بدون قسم
+                  </button>
+                  {sectionOptions.map((x) => (
+                    <button key={x.id} type="button" role="radio" aria-checked={field.value === x.id} aria-pressed={field.value === x.id} className="chip" onClick={() => field.onChange(x.id)}>
+                      <span className="h-2.5 w-2.5 rounded-full" style={{ background: x.color }} aria-hidden />
+                      {x.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            />
+          </fieldset>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
