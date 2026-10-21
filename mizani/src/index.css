@@ -1,0 +1,113 @@
+@import '@fontsource/alexandria/arabic-500.css';
+@import '@fontsource/alexandria/arabic-700.css';
+@import '@fontsource/alexandria/latin-500.css';
+@import '@fontsource/alexandria/latin-700.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-400.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-500.css';
+@import '@fontsource/ibm-plex-sans-arabic/arabic-600.css';
+@import '@fontsource/ibm-plex-sans-arabic/latin-400.css';
+@import '@fontsource/ibm-plex-sans-arabic/latin-500.css';
+@import '@fontsource/ibm-plex-sans-arabic/latin-600.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg: #F7F9F8;
+    --surface: #FFFFFF;
+    --surface-2: #EEF3F1;
+    --text: #12262D;
+    --muted: #5C6F75;
+    --line: #DFE7E4;
+    --ink: #123B49;
+    color-scheme: light;
+  }
+  .dark {
+    --bg: #0C1A1F;
+    --surface: #13252C;
+    --surface-2: #1A3038;
+    --text: #E8F0EE;
+    --muted: #9AB0B5;
+    --line: #24404A;
+    --ink: #7FC4D6;
+    color-scheme: dark;
+  }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    @apply font-sans antialiased;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+  h1, h2, h3 { @apply font-display; }
+  :focus-visible { outline: 2.5px solid #D9AA58; outline-offset: 2px; border-radius: 6px; }
+  input[type='date'] { min-height: 2.75rem; }
+  /* الأرقام بعرض ثابت لسهولة المقارنة */
+  .num { font-variant-numeric: tabular-nums; unicode-bidi: isolate; direction: ltr; display: inline-block; }
+}
+
+@layer components {
+  .card { background: var(--surface); border: 1px solid var(--line); @apply rounded-2xl shadow-card; }
+  .muted { color: var(--muted); }
+  .surface-2 { background: var(--surface-2); }
+  .line { border-color: var(--line); }
+  .field {
+    @apply w-full rounded-xl px-3.5 py-2.5 text-base outline-none transition;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    color: var(--text);
+  }
+  .field:focus { border-color: #123B49; box-shadow: 0 0 0 3px rgba(18,59,73,.15); }
+  .dark .field:focus { border-color: #7FC4D6; box-shadow: 0 0 0 3px rgba(127,196,214,.2); }
+  .field[aria-invalid='true'] { border-color: #C94E55; }
+  .label { @apply mb-1.5 block text-sm font-medium; }
+  .btn {
+    @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-xl px-4 text-[0.95rem] font-medium transition active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  .btn-primary { @apply btn bg-ink text-white hover:bg-ink-600 dark:bg-[#2B7A90] dark:hover:bg-[#33889f]; }
+  .btn-ghost { @apply btn; color: var(--text); }
+  .btn-ghost:hover { background: var(--surface-2); }
+  .btn-outline { @apply btn; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
+  .btn-outline:hover { background: var(--surface-2); }
+  .btn-danger { @apply btn bg-expense text-white hover:brightness-95; }
+  .chip {
+    @apply inline-flex min-h-[2.25rem] items-center gap-1.5 rounded-full px-3 text-sm transition;
+    border: 1px solid var(--line);
+    background: var(--surface);
+  }
+  .chip[aria-pressed='true'] { @apply border-ink bg-ink text-white dark:border-[#2B7A90] dark:bg-[#2B7A90]; }
+  .text-ink-adaptive { color: var(--ink); }
+}
+
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.anim-rise { animation: rise .22s ease-out both; }
+.anim-fade { animation: fade .18s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .anim-rise, .anim-fade { animation: none; }
+  * { transition: none !important; }
+}
+
+/* Recharts: منع تجاوز العرض على الجوال */
+.recharts-wrapper, .recharts-surface { max-width: 100%; }
+.recharts-tooltip-wrapper { direction: rtl; }
+
+@media print {
+  @page { size: A4; margin: 14mm; }
+  :root, .dark { --bg: #fff; --surface: #fff; --surface-2: #f2f4f4; --text: #000; --muted: #555; --line: #cfd6d4; --ink: #123B49; color-scheme: light; }
+  html, body { background: #fff !important; color: #000 !important; }
+  .no-print { display: none !important; }
+  .card { box-shadow: none !important; border-color: #ccc !important; break-inside: avoid; }
+  .print-root { padding: 0 !important; max-width: none !important; }
+  table { break-inside: auto; }
+  tr { break-inside: avoid; }
+  thead { display: table-header-group; }
+}
+
+dialog.sheet { max-height: 100dvh; }
+dialog.sheet::backdrop { background: rgba(7, 26, 32, .55); }
+@media (min-width: 768px) { dialog.sheet { max-height: 92dvh; } }
