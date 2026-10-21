@@ -1,20 +1,22 @@
-# ينشر الموقع على GitHub Pages عند كل دفع إلى main:
-#   /          ← نظام متابعة الطلاب (index.html في جذر المستودع، كما هو)
-#   /mizani/   ← تطبيق ميزاني بعد بنائه
-name: Deploy to GitHub Pages
+# يبني تطبيق ميزاني ويحفظ النسخة الجاهزة في مجلد app/ على الفرع main.
+# GitHub Pages (وضع النشر من الفرع) ينشر الملفات كما هي، فيصبح:
+#   /      ← نظام متابعة الطلاب (index.html)
+#   /app/  ← تطبيق ميزاني
+name: Build Mizani app
 
 on:
   push:
     branches: [main]
+    paths:
+      - 'mizani/**'
+      - '.github/workflows/deploy-pages.yml'
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages
+  group: build-app
   cancel-in-progress: false
 
 jobs:
@@ -39,28 +41,21 @@ jobs:
         working-directory: mizani
         run: npm test
 
-      - name: Build Mizani
+      - name: Build
         working-directory: mizani
         run: npm run build
 
-      - name: Assemble site
+      - name: Update app/ folder
         run: |
-          mkdir -p _site/mizani
-          cp index.html _site/index.html
-          cp -r mizani/dist/. _site/mizani/
-
-      - uses: actions/configure-pages@v5
-
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: _site
-
-  deploy:
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}mizani/
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          rm -rf app
+          cp -r mizani/dist app
+          rm -f app/assets/*.woff
+          git add -A app
+          if git diff --cached --quiet; then
+            echo "app/ is already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898099+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Update built Mizani app"
+          git push
