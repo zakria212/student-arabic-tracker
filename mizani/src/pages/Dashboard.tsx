@@ -128,12 +128,12 @@ function DebtsStrip({ views }: { views: NonNullable<ReturnType<typeof useDebtVie
       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-soft text-[#A87A2A] dark:bg-[#2a2516]"><HandCoins className="h-5 w-5" /></span>
       <span className="grid flex-1 grid-cols-2 gap-2 text-sm">
         <span>
-          <span className="muted block text-xs">لك عند الآخرين</span>
-          <Money minor={lent.remainingMinor} className="font-semibold text-income dark:text-[#4FC7A6]" />
+          <span className="muted block text-xs">أخذت (عليك)</span>
+          <Money minor={borrowed.remainingMinor} className="font-semibold text-expense dark:text-[#EE8C92]" />
         </span>
         <span>
-          <span className="muted block text-xs">عليك للآخرين</span>
-          <Money minor={borrowed.remainingMinor} className="font-semibold text-expense dark:text-[#EE8C92]" />
+          <span className="muted block text-xs">أعطيت (لك)</span>
+          <Money minor={lent.remainingMinor} className="font-semibold text-income dark:text-[#4FC7A6]" />
         </span>
       </span>
       {overdue > 0 && <span className="rounded-full bg-expense px-2 py-0.5 text-[11px] font-semibold text-white">{toDigits(overdue, settings.numerals)} متأخر</span>}

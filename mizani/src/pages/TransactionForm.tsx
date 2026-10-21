@@ -216,7 +216,7 @@ export default function TransactionForm() {
         name="type"
         render={({ field }) => (
           <div role="radiogroup" aria-label="نوع الحركة" className="card mb-4 grid grid-cols-2 gap-1 p-1">
-            {(['expense', 'income'] as const).map((t) => (
+            {(['income', 'expense'] as const).map((t) => (
               <button
                 key={t}
                 type="button"
@@ -227,7 +227,7 @@ export default function TransactionForm() {
                   field.value === t ? (t === 'expense' ? 'bg-expense text-white shadow' : 'bg-income text-white shadow') : 'muted hover:bg-[var(--surface-2)]'
                 }`}
               >
-                {t === 'expense' ? 'مصروف −' : 'دخل +'}
+                {t === 'expense' ? 'المصروف −' : 'الدخل +'}
               </button>
             ))}
           </div>

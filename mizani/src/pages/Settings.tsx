@@ -180,7 +180,7 @@ export default function SettingsPage() {
         <button className="btn-outline !text-expense" onClick={() => { setWipeText(''); setWipeOpen(true); }}>مسح جميع البيانات…</button>
       </section>
 
-      <p className="muted pb-4 text-center text-xs">ميزاني · الإصدار 1.0 · العملة الحالية: {currency.name}</p>
+      <p className="muted pb-4 text-center text-xs">ميزاني · الإصدار {__APP_VERSION__} · العملة الحالية: {currency.name}</p>
 
       <ConfirmDialog
         open={!!pendingCurrency}

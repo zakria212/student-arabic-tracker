@@ -29,7 +29,7 @@ export type Section = {
   order: number;
 };
 
-/** lent: أخذه مني شخص (لي عنده) · borrowed: أخذته من شخص (عليّ له) */
+/** borrowed: «أخذت» من شخص (عليّ له) · lent: «أعطيت» شخصًا (لي عنده) */
 export type DebtDirection = 'lent' | 'borrowed';
 
 export type Debt = {
@@ -57,8 +57,8 @@ export type DebtPayment = {
 };
 
 export const DEBT_LABEL: Record<DebtDirection, { tab: string; who: string; total: string }> = {
-  lent: { tab: 'لي عند الناس', who: 'من أخذ مني', total: 'لك عند الآخرين' },
-  borrowed: { tab: 'عليّ للناس', who: 'من أخذت منه', total: 'عليك للآخرين' },
+  borrowed: { tab: 'أخذت', who: 'مبالغ أخذتها من غيري (عليّ)', total: 'أخذت (عليك)' },
+  lent: { tab: 'أعطيت', who: 'مبالغ أعطيتها لغيري (لي)', total: 'أعطيت (لك)' },
 };
 
 export type Category = {
