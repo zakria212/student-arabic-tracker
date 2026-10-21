@@ -27,6 +27,15 @@ npm run dev        # خادم التطوير: http://localhost:5173
 
 `npm run build` يُنتج مجلد `dist/` ثابتًا بمسارات نسبية، فيمكن رفعه على أي استضافة ملفات ثابتة (GitHub Pages، Netlify، خادم عادي). يجب أن تكون الاستضافة عبر **HTTPS** (أو `localhost`) حتى يعمل Service Worker والتثبيت والعمل دون اتصال. التنقل يعتمد على `#` في الروابط فلا يحتاج إعدادات خاصة في الخادم.
 
+### النشر على GitHub Pages (تلقائي)
+
+ملف `.github/workflows/deploy-pages.yml` يختبر التطبيق ويبنيه وينشره عند كل دفع إلى الفرع `main`:
+
+- `https://<اسم-المستخدم>.github.io/student-arabic-tracker/` ← نظام متابعة الطلاب (كما هو)
+- `https://<اسم-المستخدم>.github.io/student-arabic-tracker/mizani/` ← تطبيق ميزاني
+
+للتفعيل مرة واحدة: **Settings ← Pages ← Build and deployment ← Source: GitHub Actions**.
+
 ## تثبيت التطبيق (PWA)
 
 - **أندرويد / Chrome / Edge**: افتح التطبيق ← قائمة المتصفح ← «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».
