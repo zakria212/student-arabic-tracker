@@ -37,13 +37,17 @@ export function shiftPeriod(p: Period, delta: number): Period {
   return p;
 }
 
-type Ctx = { period: Period; setPeriod: (p: Period) => void };
-const PeriodContext = createContext<Ctx>({ period: currentMonth(), setPeriod: () => {} });
+/** 'all' = كل الأقسام، 'none' = بلا قسم، أو معرّف قسم */
+export type SectionFilter = string;
 
-/** الفترة المختارة مشتركة بين الرئيسية والحركات والتقارير */
+type Ctx = { period: Period; setPeriod: (p: Period) => void; section: SectionFilter; setSection: (s: SectionFilter) => void };
+const PeriodContext = createContext<Ctx>({ period: currentMonth(), setPeriod: () => {}, section: 'all', setSection: () => {} });
+
+/** الفترة والقسم المختاران مشتركان بين الرئيسية والحركات والتقارير */
 export function PeriodProvider({ children }: { children: ReactNode }) {
   const [period, setPeriod] = useState<Period>(currentMonth);
-  const value = useMemo(() => ({ period, setPeriod }), [period]);
+  const [section, setSection] = useState<SectionFilter>('all');
+  const value = useMemo(() => ({ period, setPeriod, section, setSection }), [period, section]);
   return <PeriodContext.Provider value={value}>{children}</PeriodContext.Provider>;
 }
 

@@ -10,6 +10,7 @@ import TransactionForm from './pages/TransactionForm';
 import Reports from './pages/Reports';
 import PrintReport from './pages/PrintReport';
 import SettingsPage from './pages/Settings';
+import Debts from './pages/Debts';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -24,6 +25,7 @@ export default function App() {
                 <Route path="transactions" element={<Transactions />} />
                 <Route path="transactions/new" element={<TransactionForm />} />
                 <Route path="transactions/:id/edit" element={<TransactionForm />} />
+                <Route path="debts" element={<Debts />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<SettingsPage />} />
                 <Route path="*" element={<NotFound />} />

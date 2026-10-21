@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db } from '../db/db';
-import type { Category, Transaction } from '../db/types';
+import type { Category, Section, Transaction } from '../db/types';
 
 /** الحركات ضمن مدى زمني (شامل) باستخدام فهرس التاريخ */
 export function useTransactionsInRange(start: string, end: string): Transaction[] | undefined {
@@ -25,4 +25,8 @@ export function useReceiptCounts(): Map<string, number> {
 
 export function useTransactionCount(): number | undefined {
   return useLiveQuery(() => db.transactions.count(), []);
+}
+
+export function useSections(): Section[] | undefined {
+  return useLiveQuery(() => db.sections.orderBy('order').toArray(), []);
 }

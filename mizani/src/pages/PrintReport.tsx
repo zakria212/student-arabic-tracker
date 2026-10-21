@@ -2,11 +2,11 @@ import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight, Printer } from 'lucide-react';
 import { Money } from '../components/Money';
-import { byCategory, sortNewestFirst, summarize, type CategoryShare } from '../domain/reports';
+import { byCategory, filterTransactions, sortNewestFirst, summarize, type CategoryShare } from '../domain/reports';
 import { paymentLabel, TYPE_LABEL } from '../db/types';
 import { formatDateAr, isValidISODate, todayISO, toDigits } from '../lib/dates';
 import { formatPercent } from '../lib/money';
-import { useCategories, useTransactionsInRange } from '../state/queries';
+import { useCategories, useSections, useTransactionsInRange } from '../state/queries';
 import { useSettings } from '../state/settings';
 
 /** صفحة تقرير منسقة للطباعة أو الحفظ PDF من المتصفح */
@@ -17,7 +17,11 @@ export default function PrintReport() {
   const start = params.get('start') ?? '';
   const end = params.get('end') ?? '';
   const valid = isValidISODate(start) && isValidISODate(end) && start <= end;
-  const txs = useTransactionsInRange(valid ? start : '0', valid ? end : '0');
+  const section = params.get('section') ?? 'all';
+  const sections = useSections() ?? [];
+  const sectionName = section === 'none' ? 'بدون قسم' : sections.find((x) => x.id === section)?.name;
+  const rangeTxs = useTransactionsInRange(valid ? start : '0', valid ? end : '0');
+  const txs = useMemo(() => rangeTxs && filterTransactions(rangeTxs, { sectionId: section }), [rangeTxs, section]);
   const categories = useCategories() ?? [];
   const catName = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
 
@@ -49,6 +53,7 @@ export default function PrintReport() {
             <div>
               <h1 className="font-display text-2xl font-bold text-ink-adaptive">تقرير ميزاني المالي</h1>
               <p className="mt-1">الفترة: من <b>{formatDateAr(start, settings.numerals)}</b> إلى <b>{formatDateAr(end, settings.numerals)}</b> (شاملة)</p>
+              {section !== 'all' && sectionName && <p>القسم: <b>{sectionName}</b></p>}
               <p className="muted text-xs">العملة: {currency.name} ({currency.code}) · أُعد في {formatDateAr(todayISO(), settings.numerals)}</p>
             </div>
           </header>

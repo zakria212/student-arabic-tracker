@@ -1,4 +1,4 @@
-import type { Category } from './types';
+import type { Category, Section } from './types';
 
 /** معرّفات ثابتة للتصنيفات الافتراضية حتى يكون الدمج بين النسخ الاحتياطية سليمًا */
 export const DEFAULT_CATEGORIES: Category[] = [
@@ -18,3 +18,8 @@ export const DEFAULT_CATEGORIES: Category[] = [
   { id: 'inc-refund', type: 'income', name: 'استرداد', icon: 'undo', color: '#5B6CC2' },
   { id: 'inc-other', type: 'income', name: 'أخرى / مكافآت', icon: 'award', color: '#7C8A90' },
 ].map((c, i) => ({ ...c, type: c.type as Category['type'], isDefault: true, isActive: true, order: i }));
+
+export const DEFAULT_SECTIONS: Section[] = [
+  { id: 'sec-home', name: 'المنزل', icon: 'home', color: '#5B6CC2', isActive: true, order: 0 },
+  { id: 'sec-work', name: 'العمل', icon: 'briefcase', color: '#2F9C8F', isActive: true, order: 1 },
+];

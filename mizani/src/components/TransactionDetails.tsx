@@ -1,7 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useLiveQuery } from 'dexie-react-hooks';
 import { useNavigate } from 'react-router-dom';
-import { CalendarDays, CreditCard, Pencil, StickyNote, Tag, Trash2 } from 'lucide-react';
+import { CalendarDays, CreditCard, FolderOpen, Pencil, StickyNote, Tag, Trash2 } from 'lucide-react';
 import { db } from '../db/db';
 import { deleteTransaction, restoreTransaction } from '../db/repo';
 import { paymentLabel, TYPE_LABEL } from '../db/types';
@@ -35,8 +35,12 @@ function TransactionDetails({ id, onClose }: { id: string; onClose: () => void }
   const data = useLiveQuery(async () => {
     const tx = await db.transactions.get(id);
     if (!tx) return { tx: null };
-    const [category, receipts] = await Promise.all([db.categories.get(tx.categoryId), db.receipts.where('transactionId').equals(id).toArray()]);
-    return { tx, category, receipts };
+    const [category, receipts, section] = await Promise.all([
+      db.categories.get(tx.categoryId),
+      db.receipts.where('transactionId').equals(id).toArray(),
+      tx.sectionId ? db.sections.get(tx.sectionId) : undefined,
+    ]);
+    return { tx, category, receipts, section };
   }, [id]);
 
   const images = useMemo<ViewerImage[]>(
@@ -109,6 +113,14 @@ function TransactionDetails({ id, onClose }: { id: string; onClose: () => void }
                   {data.category && !data.category.isActive && <span className="muted text-xs">(معطّل)</span>}
                 </span>
               </Row>
+              {data.section && (
+                <Row icon={<FolderOpen className="h-4 w-4" />} label="القسم">
+                  <span className="inline-flex items-center gap-2">
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: data.section.color }} aria-hidden />
+                    {data.section.name}
+                  </span>
+                </Row>
+              )}
               <Row icon={<CalendarDays className="h-4 w-4" />} label="التاريخ">{formatDateAr(tx.date, settings.numerals)}</Row>
               {tx.paymentMethod && (
                 <Row icon={<CreditCard className="h-4 w-4" />} label={income ? 'طريقة الاستلام' : 'طريقة الدفع'}>{paymentLabel(tx.paymentMethod)}</Row>

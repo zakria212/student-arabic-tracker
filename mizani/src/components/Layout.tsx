@@ -1,9 +1,10 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { BarChart3, Home, ListOrdered, Plus, Settings } from 'lucide-react';
+import { BarChart3, HandCoins, Home, ListOrdered, Plus, Settings } from 'lucide-react';
 
 const NAV = [
   { to: '/', label: 'الرئيسية', icon: Home, end: true },
   { to: '/transactions', label: 'الحركات', icon: ListOrdered },
+  { to: '/debts', label: 'الديون', icon: HandCoins },
   { to: '/reports', label: 'التقارير', icon: BarChart3 },
   { to: '/settings', label: 'الإعدادات', icon: Settings },
 ];
@@ -56,27 +57,27 @@ export function Layout() {
         <p className="muted mt-auto px-2 text-[11px] leading-5">بياناتك محفوظة على هذا الجهاز فقط. احتفظ بنسخة احتياطية دوريًا.</p>
       </aside>
 
-      <main className={`mx-auto w-full max-w-5xl px-4 pt-4 md:px-8 md:pt-8 ${inForm ? 'pb-32' : 'pb-28'} md:pb-10`}>
+      <main className={`mx-auto w-full max-w-5xl px-4 pt-4 md:px-8 md:pt-8 ${inForm ? 'pb-32' : 'pb-36'} md:pb-10`}>
         <Outlet />
       </main>
 
-      {/* شريط تنقل سفلي للجوال */}
+      {/* شريط تنقل سفلي للجوال مع زر إضافة عائم */}
       {!inForm && (
-        <nav className="no-print safe-bottom fixed inset-x-0 bottom-0 z-40 border-t line md:hidden" style={{ background: 'var(--surface)' }} aria-label="التنقل الرئيسي">
-          <div className="relative grid grid-cols-5 items-end px-1">
-            {NAV.slice(0, 2).map((n) => <BottomItem key={n.to} {...n} />)}
-            <div className="flex justify-center">
-              <button
-                onClick={() => navigate('/transactions/new')}
-                className="-mt-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-ink text-white shadow-lg ring-4 ring-[var(--bg)] transition active:scale-95 dark:bg-[#2B7A90]"
-                aria-label="إضافة حركة"
-              >
-                <Plus className="h-7 w-7" />
-              </button>
+        <>
+          <button
+            onClick={() => navigate('/transactions/new')}
+            className="no-print fixed z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-ink text-white shadow-lg ring-4 ring-[var(--bg)] transition active:scale-95 md:hidden dark:bg-[#2B7A90]"
+            style={{ left: 'calc(1rem + env(safe-area-inset-left, 0px))', bottom: 'calc(4.75rem + env(safe-area-inset-bottom, 0px))' }}
+            aria-label="إضافة حركة"
+          >
+            <Plus className="h-7 w-7" />
+          </button>
+          <nav className="no-print safe-bottom fixed inset-x-0 bottom-0 z-40 border-t line md:hidden" style={{ background: 'var(--surface)' }} aria-label="التنقل الرئيسي">
+            <div className="grid grid-cols-5 px-1">
+              {NAV.map((n) => <BottomItem key={n.to} {...n} />)}
             </div>
-            {NAV.slice(2).map((n) => <BottomItem key={n.to} {...n} />)}
-          </div>
-        </nav>
+          </nav>
+        </>
       )}
     </div>
   );

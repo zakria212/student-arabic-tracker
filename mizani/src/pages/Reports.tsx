@@ -2,27 +2,30 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Download, Printer, Table2, BarChart3 } from 'lucide-react';
 import { PeriodPicker } from '../components/PeriodPicker';
+import { SectionChips } from '../components/SectionChips';
 import { SummaryCards } from '../components/SummaryCards';
 import { CategoryBars, TrendChart } from '../components/Charts';
 import { CategoryIcon } from '../components/CategoryIcon';
 import { EmptyState } from '../components/EmptyState';
 import { Money } from '../components/Money';
-import { byCategory, pickGranularity, summarize, timeSeries, type CategoryShare } from '../domain/reports';
+import { byCategory, bySection, filterTransactions, pickGranularity, summarize, timeSeries, type CategoryShare, type SectionShare } from '../domain/reports';
 import { formatPercent } from '../lib/money';
 import { toDigits } from '../lib/dates';
 import { exportTransactionsCsv } from '../lib/exportCsv';
 import { resolvePeriod, usePeriod } from '../state/period';
-import { useCategories, useTransactionsInRange } from '../state/queries';
+import { useCategories, useSections, useTransactionsInRange } from '../state/queries';
 import { useSettings } from '../state/settings';
 import { useToast } from '../state/toast';
 
 export default function Reports() {
   const navigate = useNavigate();
   const toast = useToast();
-  const { period } = usePeriod();
+  const { period, section } = usePeriod();
+  const sections = useSections() ?? [];
   const { settings } = useSettings();
   const { start, end, label } = resolvePeriod(period, settings.numerals);
-  const txs = useTransactionsInRange(start, end);
+  const rangeTxs = useTransactionsInRange(start, end);
+  const txs = useMemo(() => rangeTxs && filterTransactions(rangeTxs, { sectionId: section }), [rangeTxs, section]);
   const categories = useCategories() ?? [];
   const [trendAsTable, setTrendAsTable] = useState(false);
 
@@ -37,9 +40,10 @@ export default function Reports() {
       incomeCats: byCategory(txs, 'income', categories),
       series: txs.length ? timeSeries(txs, s, e) : [],
       granularity: txs.length ? pickGranularity(s, e) : 'day',
+      sections: bySection(txs, sections),
       range: { s, e },
     };
-  }, [txs, categories, start, end, period.mode]);
+  }, [txs, categories, sections, start, end, period.mode]);
 
   const spendRatio = r && r.summary.incomeMinor > 0 ? r.summary.expenseMinor / r.summary.incomeMinor : null;
   const g = { day: 'يوميًا', week: 'أسبوعيًا', month: 'شهريًا' }[r?.granularity ?? 'day'];
@@ -52,7 +56,7 @@ export default function Reports() {
 
   const onPrint = () => {
     if (!r || !txs?.length) return toast('لا توجد حركات في هذه الفترة', { kind: 'info' });
-    const p = new URLSearchParams({ start: r.range.s, end: r.range.e, label });
+    const p = new URLSearchParams({ start: r.range.s, end: r.range.e, label, section });
     navigate(`/reports/print?${p}`);
   };
 
@@ -67,6 +71,7 @@ export default function Reports() {
       </header>
 
       <PeriodPicker allowAll />
+      <SectionChips />
 
       {r && <SummaryCards summary={r.summary} />}
 
@@ -132,6 +137,8 @@ export default function Reports() {
             )}
           </section>
 
+          {section === 'all' && r.sections.length > 1 && <SectionTable rows={r.sections} />}
+
           <section className="card overflow-hidden">
             <h2 className="p-4 pb-2 text-base font-bold">التوزيع التفصيلي حسب التصنيف</h2>
             <CategoryTable title="المصروفات" rows={r.expenseCats} total={r.summary.expenseMinor} />
@@ -175,5 +182,44 @@ function CategoryTable({ title, rows, total }: { title: string; rows: CategorySh
         </tfoot>
       </table>
     </div>
+  );
+}
+
+function SectionTable({ rows }: { rows: SectionShare[] }) {
+  const { settings } = useSettings();
+  const { setSection } = usePeriod();
+  return (
+    <section className="card overflow-hidden">
+      <h2 className="p-4 pb-2 text-base font-bold">حسب القسم</h2>
+      <div className="overflow-x-auto px-4 pb-4">
+        <table className="w-full min-w-[420px] text-sm">
+          <thead className="muted text-xs">
+            <tr className="border-b line">
+              <th className="py-2 text-start font-medium">القسم</th>
+              <th className="text-center font-medium">الحركات</th>
+              <th className="text-end font-medium">الدخل</th>
+              <th className="text-end font-medium">المصروفات</th>
+              <th className="text-end font-medium">الصافي</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[var(--line)]">
+            {rows.map((x) => (
+              <tr key={x.sectionId}>
+                <td className="py-2">
+                  <button className="flex items-center gap-2 hover:underline" onClick={() => setSection(x.sectionId)}>
+                    <span className="h-2.5 w-2.5 rounded-full" style={{ background: x.color }} aria-hidden />
+                    {x.name}
+                  </button>
+                </td>
+                <td className="num text-center">{toDigits(x.count, settings.numerals)}</td>
+                <td className="text-end"><Money minor={x.incomeMinor} /></td>
+                <td className="text-end"><Money minor={x.expenseMinor} /></td>
+                <td className="text-end"><Money minor={x.incomeMinor - x.expenseMinor} signed /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
   );
 }

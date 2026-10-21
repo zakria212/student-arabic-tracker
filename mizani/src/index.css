@@ -111,3 +111,11 @@
 dialog.sheet { max-height: 100dvh; }
 dialog.sheet::backdrop { background: rgba(7, 26, 32, .55); }
 @media (min-width: 768px) { dialog.sheet { max-height: 92dvh; } }
+
+/* طبقة التنبيهات: أعلى الشاشة على الجوال، وأسفلها على الحاسوب */
+.toast-layer {
+  position: fixed; inset: auto 0 auto 0; margin: 0; border: 0; padding: 0 1rem; background: transparent; overflow: visible;
+  display: flex; z-index: 60; top: calc(env(safe-area-inset-top, 0px) + 0.75rem); bottom: auto; width: auto; height: auto;
+}
+.toast-layer[popover]:not(:popover-open) { display: none; }
+@media (min-width: 768px) { .toast-layer { top: auto; bottom: 1.5rem; } }

@@ -1,16 +1,21 @@
 import { useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus } from 'lucide-react';
+import { ChevronLeft, HandCoins, Plus } from 'lucide-react';
 import { PeriodPicker } from '../components/PeriodPicker';
 import { SummaryCards } from '../components/SummaryCards';
+import { SectionChips } from '../components/SectionChips';
+import { Money } from '../components/Money';
 import { CategoryBars, TrendChart } from '../components/Charts';
 import { TransactionRow } from '../components/TransactionRow';
 import { EmptyState } from '../components/EmptyState';
 import { Logo } from '../components/Layout';
 import { useDetails } from '../components/TransactionDetails';
-import { byCategory, sortNewestFirst, summarize, timeSeries } from '../domain/reports';
+import { byCategory, filterTransactions, sortNewestFirst, summarize, timeSeries } from '../domain/reports';
+import { useDebtViews } from '../state/debts';
+import { debtTotals } from '../domain/debts';
+import { toDigits } from '../lib/dates';
 import { resolvePeriod, usePeriod } from '../state/period';
-import { useCategories, useReceiptCounts, useTransactionsInRange } from '../state/queries';
+import { useCategories, useReceiptCounts, useSections, useTransactionsInRange } from '../state/queries';
 import { useSettings } from '../state/settings';
 
 function greeting() {
@@ -23,12 +28,16 @@ function greeting() {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { openDetails } = useDetails();
-  const { period } = usePeriod();
+  const { period, section } = usePeriod();
   const { settings } = useSettings();
   const { start, end } = resolvePeriod(period, settings.numerals);
-  const txs = useTransactionsInRange(start, end);
+  const rangeTxs = useTransactionsInRange(start, end);
+  const txs = useMemo(() => rangeTxs && filterTransactions(rangeTxs, { sectionId: section }), [rangeTxs, section]);
+  const debts = useDebtViews();
   const categories = useCategories() ?? [];
   const receiptCounts = useReceiptCounts();
+  const sections = useSections() ?? [];
+  const secById = useMemo(() => new Map(sections.map((x) => [x.id, x])), [sections]);
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories]);
 
   const data = useMemo(() => {
@@ -62,8 +71,11 @@ export default function Dashboard() {
       </header>
 
       <PeriodPicker />
+      <SectionChips />
 
       {data && <SummaryCards summary={data.summary} />}
+
+      {debts && debts.some((d) => d.status !== 'settled') && <DebtsStrip views={debts} />}
 
       {data && data.recent.length === 0 && (
         <div className="card">
@@ -86,7 +98,7 @@ export default function Dashboard() {
             </div>
             <ul className="-mx-2">
               {data.recent.map((t) => (
-                <TransactionRow key={t.id} tx={t} category={catById.get(t.categoryId)} receipts={receiptCounts.get(t.id)} onOpen={openDetails} />
+                <TransactionRow key={t.id} tx={t} category={catById.get(t.categoryId)} receipts={receiptCounts.get(t.id)} section={t.sectionId ? secById.get(t.sectionId) : undefined} onOpen={openDetails} />
               ))}
             </ul>
           </section>
@@ -103,5 +115,29 @@ export default function Dashboard() {
         </div>
       )}
     </div>
+  );
+}
+
+function DebtsStrip({ views }: { views: NonNullable<ReturnType<typeof useDebtViews>> }) {
+  const { settings } = useSettings();
+  const lent = debtTotals(views, 'lent');
+  const borrowed = debtTotals(views, 'borrowed');
+  const overdue = lent.overdueCount + borrowed.overdueCount;
+  return (
+    <Link to="/debts" className="card flex items-center gap-3 p-4 transition hover:bg-[var(--surface-2)]">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-soft text-[#A87A2A] dark:bg-[#2a2516]"><HandCoins className="h-5 w-5" /></span>
+      <span className="grid flex-1 grid-cols-2 gap-2 text-sm">
+        <span>
+          <span className="muted block text-xs">لك عند الآخرين</span>
+          <Money minor={lent.remainingMinor} className="font-semibold text-income dark:text-[#4FC7A6]" />
+        </span>
+        <span>
+          <span className="muted block text-xs">عليك للآخرين</span>
+          <Money minor={borrowed.remainingMinor} className="font-semibold text-expense dark:text-[#EE8C92]" />
+        </span>
+      </span>
+      {overdue > 0 && <span className="rounded-full bg-expense px-2 py-0.5 text-[11px] font-semibold text-white">{toDigits(overdue, settings.numerals)} متأخر</span>}
+      <ChevronLeft className="muted h-5 w-5" />
+    </Link>
   );
 }
