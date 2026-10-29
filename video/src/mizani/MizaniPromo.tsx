@@ -8,9 +8,10 @@ import { ReportsScene } from "./scenes/ReportsScene";
 import { DebtsScene } from "./scenes/DebtsScene";
 import { PrivacyScene } from "./scenes/PrivacyScene";
 import { OutroScene } from "./scenes/OutroScene";
+import { SignatureScene } from "./scenes/SignatureScene";
 
-// 6 مشاهد مجموعها 735 إطارًا، ناقص 5 انتقالات × 15 إطارًا = 660 إطارًا (22 ثانية)
-export const MIZANI_PROMO_DURATION = 660;
+// 7 مشاهد مجموعها 825 إطارًا، ناقص 6 انتقالات × 15 إطارًا = 735 إطارًا (24.5 ثانية)
+export const MIZANI_PROMO_DURATION = 735;
 
 export const MizaniPromo: React.FC = () => (
   <TransitionSeries>
@@ -42,6 +43,10 @@ export const MizaniPromo: React.FC = () => (
     <TransitionSeries.Transition presentation={fade()} timing={linearTiming({ durationInFrames: 15 })} />
     <TransitionSeries.Sequence name="Outro" durationInFrames={120}>
       <OutroScene />
+    </TransitionSeries.Sequence>
+    <TransitionSeries.Transition presentation={fade()} timing={linearTiming({ durationInFrames: 15 })} />
+    <TransitionSeries.Sequence name="Signature" durationInFrames={90}>
+      <SignatureScene />
     </TransitionSeries.Sequence>
   </TransitionSeries>
 );

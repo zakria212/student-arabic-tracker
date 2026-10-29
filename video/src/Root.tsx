@@ -6,6 +6,7 @@ import { ReportsScene } from "./mizani/scenes/ReportsScene";
 import { DebtsScene } from "./mizani/scenes/DebtsScene";
 import { PrivacyScene } from "./mizani/scenes/PrivacyScene";
 import { OutroScene } from "./mizani/scenes/OutroScene";
+import { SignatureScene } from "./mizani/scenes/SignatureScene";
 
 const reel = { width: 1080, height: 1920, fps: 30 };
 
@@ -25,6 +26,7 @@ export const RemotionRoot: React.FC = () => {
         <Composition id="Debts" component={DebtsScene} durationInFrames={135} {...reel} />
         <Composition id="Privacy" component={PrivacyScene} durationInFrames={105} {...reel} />
         <Composition id="Outro" component={OutroScene} durationInFrames={120} {...reel} />
+        <Composition id="Signature" component={SignatureScene} durationInFrames={90} {...reel} />
       </Folder>
     </>
   );
