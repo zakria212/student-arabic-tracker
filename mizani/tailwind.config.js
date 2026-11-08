@@ -5,15 +5,17 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: { DEFAULT: '#123B49', 600: '#1A4D5E', 700: '#0E2F3A', 800: '#0A242C' },
-        paper: '#F7F9F8',
+        ink: { DEFAULT: '#02343F', 600: '#0A4654', 700: '#01262E', 800: '#011B21' },
+        paper: '#F7F5E6',
+        cream: '#F0EDCC',
+        plum: '#331B3F',
+        mint: { DEFAULT: '#ACC7B4', soft: '#E3EEE6' },
         income: { DEFAULT: '#14866D', soft: '#E3F3EE' },
         expense: { DEFAULT: '#C94E55', soft: '#FAE8E9' },
-        gold: { DEFAULT: '#D9AA58', soft: '#F8EFDD' },
       },
       fontFamily: {
-        display: ['Alexandria', 'IBM Plex Sans Arabic', 'system-ui', 'sans-serif'],
-        sans: ['IBM Plex Sans Arabic', 'system-ui', 'Tahoma', 'sans-serif'],
+        display: ['Thmanyah Serif Display', 'Thmanyah Serif Text', 'system-ui', 'serif'],
+        sans: ['Thmanyah Serif Text', 'system-ui', 'Tahoma', 'serif'],
       },
       borderRadius: { xl: '0.9rem', '2xl': '1.15rem' },
       boxShadow: {

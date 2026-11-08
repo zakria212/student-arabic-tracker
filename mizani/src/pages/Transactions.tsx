@@ -103,7 +103,7 @@ export default function Transactions() {
           aria-label="خيارات التصفية"
         >
           <SlidersHorizontal className="h-4 w-4" />
-          {activeFilters > 0 && <span className="absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-gold text-[11px] font-bold text-ink">{activeFilters}</span>}
+          {activeFilters > 0 && <span className="absolute -left-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-mint text-[11px] font-bold text-ink">{activeFilters}</span>}
         </button>
       </div>
 
@@ -138,7 +138,7 @@ export default function Transactions() {
           </label>
           <div className="flex items-end gap-2">
             <label className="flex min-h-[2.75rem] flex-1 cursor-pointer items-center gap-2 text-sm">
-              <input type="checkbox" className="h-4 w-4 accent-[#123B49]" checked={grouped} onChange={(e) => setParam('group', e.target.checked ? '1' : '0', '1')} />
+              <input type="checkbox" className="h-4 w-4 accent-[#02343F]" checked={grouped} onChange={(e) => setParam('group', e.target.checked ? '1' : '0', '1')} />
               تجميع حسب اليوم
             </label>
             {activeFilters > 0 && (

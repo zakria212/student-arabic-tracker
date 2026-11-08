@@ -44,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             <span className="flex-1 text-sm leading-6">{t.message}</span>
             {t.action && (
               <button
-                className="rounded-lg px-3 py-1.5 text-sm font-semibold text-[#F3CF8E] hover:bg-white/10"
+                className="rounded-lg px-3 py-1.5 text-sm font-semibold text-[#F0EDCC] hover:bg-white/10"
                 onClick={() => { t.action!.run(); dismiss(t.id); }}
               >
                 {t.action.label}

@@ -238,7 +238,7 @@ export default function TransactionForm() {
         {/* المبلغ */}
         <div>
           <label htmlFor="amount" className="label">المبلغ <span className="text-expense">*</span></label>
-          <div className={`flex items-center gap-2 rounded-2xl border-2 px-4 py-2 transition focus-within:border-ink dark:focus-within:border-[#7FC4D6] ${errors.amount ? 'border-expense' : 'line'}`} style={{ background: 'var(--surface)' }}>
+          <div className={`flex items-center gap-2 rounded-2xl border-2 px-4 py-2 transition focus-within:border-ink dark:focus-within:border-[#ACC7B4] ${errors.amount ? 'border-expense' : 'line'}`} style={{ background: 'var(--surface)' }}>
             <input
               id="amount"
               {...register('amount')}
@@ -288,7 +288,7 @@ export default function TransactionForm() {
                     aria-checked={field.value === c.id}
                     onClick={() => field.onChange(c.id)}
                     className={`flex min-h-[4.5rem] flex-col items-center justify-center gap-1 rounded-xl border p-2 text-center text-xs font-medium transition ${
-                      field.value === c.id ? 'border-ink bg-ink/5 ring-2 ring-ink/20 dark:border-[#7FC4D6] dark:bg-white/5' : 'line hover:bg-[var(--surface-2)]'
+                      field.value === c.id ? 'border-ink bg-ink/5 ring-2 ring-ink/20 dark:border-[#ACC7B4] dark:bg-white/5' : 'line hover:bg-[var(--surface-2)]'
                     }`}
                   >
                     <CategoryIcon icon={c.icon} color={c.color} size="sm" />
@@ -388,7 +388,7 @@ export default function TransactionForm() {
       {/* زر الحفظ ثابت أسفل الشاشة على الجوال */}
       <div className="no-print safe-bottom fixed inset-x-0 bottom-0 z-40 border-t px-4 py-3 line md:static md:mt-5 md:border-0 md:p-0" style={{ background: 'var(--surface)' }}>
         <div className="mx-auto flex max-w-xl gap-2 md:bg-transparent">
-          <button type="submit" className={`btn flex-1 !min-h-[3.25rem] text-base text-white ${income ? 'bg-income hover:brightness-95' : 'bg-ink hover:bg-ink-600 dark:bg-[#2B7A90]'}`} disabled={isSubmitting || processing}>
+          <button type="submit" className={`btn flex-1 !min-h-[3.25rem] text-base text-white ${income ? 'bg-income hover:brightness-95' : 'bg-ink hover:bg-ink-600 dark:bg-[#0E5A6B]'}`} disabled={isSubmitting || processing}>
             {isSubmitting ? <Loader2 className="h-5 w-5 animate-spin" /> : null}
             حفظ الحركة
           </button>

@@ -125,7 +125,7 @@ function DebtsStrip({ views }: { views: NonNullable<ReturnType<typeof useDebtVie
   const overdue = lent.overdueCount + borrowed.overdueCount;
   return (
     <Link to="/debts" className="card flex items-center gap-3 p-4 transition hover:bg-[var(--surface-2)]">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gold-soft text-[#A87A2A] dark:bg-[#2a2516]"><HandCoins className="h-5 w-5" /></span>
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-mint-soft text-plum dark:text-mint dark:bg-[#0A4250]"><HandCoins className="h-5 w-5" /></span>
       <span className="grid flex-1 grid-cols-2 gap-2 text-sm">
         <span>
           <span className="muted block text-xs">أخذت (عليك)</span>

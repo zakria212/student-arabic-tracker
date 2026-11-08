@@ -25,10 +25,10 @@ export function SummaryCards({ summary }: { summary: Summary }) {
         <Money minor={summary.expenseMinor} className="mt-3 block font-display text-xl font-bold sm:text-2xl" />
         <div className="muted mt-1 text-xs">{n(summary.expenseCount)} حركة</div>
       </div>
-      <div className="anim-rise relative col-span-2 overflow-hidden rounded-2xl bg-ink p-4 text-white shadow-card md:col-span-1 dark:bg-[#1B4B5A]">
-        <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full border-[10px] border-gold/30" aria-hidden />
+      <div className="anim-rise relative col-span-2 overflow-hidden rounded-2xl bg-ink p-4 text-white shadow-card md:col-span-1 dark:bg-[#331B3F]">
+        <div className="absolute -left-6 -top-6 h-24 w-24 rounded-full border-[10px] border-mint/30" aria-hidden />
         <div className="flex items-center gap-2 text-sm font-medium text-white/85">
-          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10"><Scale className="h-4 w-4 text-gold" /></span>
+          <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/10"><Scale className="h-4 w-4 text-mint" /></span>
           الصافي
         </div>
         <Money minor={summary.netMinor} signed className="mt-3 block font-display text-2xl font-bold" currencyClassName="text-[0.6em] font-normal opacity-75" />

@@ -10,7 +10,7 @@ const SettingsContext = createContext<Ctx>({ settings: DEFAULT_SETTINGS, currenc
 function applyTheme(theme: Settings['theme']) {
   const dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.classList.toggle('dark', dark);
-  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0C1A1F' : '#123B49');
+  document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#01212A' : '#02343F');
   try {
     localStorage.setItem('mizani-theme', theme); // تفضيل عرض فقط لتجنب الوميض
   } catch { /* التخزين غير متاح */ }
