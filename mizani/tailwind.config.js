@@ -14,8 +14,8 @@ export default {
         expense: { DEFAULT: '#C94E55', soft: '#FAE8E9' },
       },
       fontFamily: {
-        display: ['Alexandria', 'IBM Plex Sans Arabic', 'system-ui', 'sans-serif'],
-        sans: ['IBM Plex Sans Arabic', 'system-ui', 'Tahoma', 'sans-serif'],
+        display: ['Thmanyah Serif Display', 'Thmanyah Serif Text', 'system-ui', 'serif'],
+        sans: ['Thmanyah Serif Text', 'system-ui', 'Tahoma', 'serif'],
       },
       borderRadius: { xl: '0.9rem', '2xl': '1.15rem' },
       boxShadow: {

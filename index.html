@@ -6,6 +6,12 @@
 <title>نظام متابعة الطلاب — النسخة المحسنة</title>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
+@font-face{font-family:"Thmanyah Serif Text";src:url(fonts/thmanyahseriftext-Regular.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Text";src:url(fonts/thmanyahseriftext-Medium.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Text";src:url(fonts/thmanyahseriftext-Bold.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Display";src:url(fonts/thmanyahserifdisplay-Medium.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Display";src:url(fonts/thmanyahserifdisplay-Bold.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Thmanyah Serif Display";src:url(fonts/thmanyahserifdisplay-Black.woff2) format("woff2");font-weight:900;font-display:swap}
 :root{
   --primary:#087f8c;--primary2:#0b9aaa;--dark:#075c66;--bg:#f3f7f8;
   --card:#fff;--text:#17343a;--muted:#6b7f84;--border:#d9e5e8;
@@ -14,7 +20,8 @@
 }
 *{box-sizing:border-box}
 html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Tahoma,Arial,sans-serif}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Thmanyah Serif Text",Tahoma,Arial,sans-serif}
+h1,h2,h3,h4,.report-title,.metric .num{font-family:"Thmanyah Serif Display","Thmanyah Serif Text",Tahoma,Arial,sans-serif}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
 .app{display:flex;min-height:100vh}

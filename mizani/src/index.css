@@ -1,13 +1,40 @@
-@import '@fontsource/alexandria/arabic-500.css';
-@import '@fontsource/alexandria/arabic-700.css';
-@import '@fontsource/alexandria/latin-500.css';
-@import '@fontsource/alexandria/latin-700.css';
-@import '@fontsource/ibm-plex-sans-arabic/arabic-400.css';
-@import '@fontsource/ibm-plex-sans-arabic/arabic-500.css';
-@import '@fontsource/ibm-plex-sans-arabic/arabic-600.css';
-@import '@fontsource/ibm-plex-sans-arabic/latin-400.css';
-@import '@fontsource/ibm-plex-sans-arabic/latin-500.css';
-@import '@fontsource/ibm-plex-sans-arabic/latin-600.css';
+/* خط ثمانية — مستخدم بإذن من ثمانية للنشر والتوزيع */
+@font-face {
+  font-family: 'Thmanyah Serif Text';
+  src: url('./fonts/thmanyahseriftext-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Text';
+  src: url('./fonts/thmanyahseriftext-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Text';
+  src: url('./fonts/thmanyahseriftext-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Display';
+  src: url('./fonts/thmanyahserifdisplay-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Display';
+  src: url('./fonts/thmanyahserifdisplay-Bold.woff2') format('woff2');
+  font-weight: 700;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Thmanyah Serif Display';
+  src: url('./fonts/thmanyahserifdisplay-Black.woff2') format('woff2');
+  font-weight: 900;
+  font-display: swap;
+}
 
 @tailwind base;
 @tailwind components;
