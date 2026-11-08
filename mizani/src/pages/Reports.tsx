@@ -86,7 +86,7 @@ export default function Reports() {
               <div className="flex-1">
                 <p className="text-sm font-medium">نسبة المصروفات إلى الدخل</p>
                 <div className="mt-2 h-2.5 overflow-hidden rounded-full surface-2">
-                  <div className={`h-full rounded-full ${spendRatio > 1 ? 'bg-expense' : 'bg-gold'}`} style={{ width: `${Math.min(spendRatio, 1) * 100}%` }} />
+                  <div className={`h-full rounded-full ${spendRatio > 1 ? 'bg-expense' : 'bg-mint'}`} style={{ width: `${Math.min(spendRatio, 1) * 100}%` }} />
                 </div>
                 <p className="muted mt-1.5 text-xs">
                   {spendRatio > 1 ? 'المصروفات تجاوزت الدخل في هذه الفترة.' : `بقي ${formatPercent(1 - spendRatio, settings.numerals)} من الدخل بعد المصروفات.`}

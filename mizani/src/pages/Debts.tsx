@@ -76,7 +76,7 @@ export default function Debts() {
             role="tab"
             aria-selected={direction === d}
             onClick={() => setDirection(d)}
-            className={`min-h-[2.75rem] rounded-xl font-display font-semibold transition ${direction === d ? 'bg-ink text-white dark:bg-[#2B7A90]' : 'muted hover:bg-[var(--surface-2)]'}`}
+            className={`min-h-[2.75rem] rounded-xl font-display font-semibold transition ${direction === d ? 'bg-ink text-white dark:bg-[#0E5A6B]' : 'muted hover:bg-[var(--surface-2)]'}`}
           >
             {DEBT_LABEL[d].tab}
             <span className="block text-[11px] font-normal opacity-80">{DEBT_LABEL[d].who}</span>

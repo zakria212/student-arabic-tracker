@@ -135,7 +135,7 @@ export default function SettingsPage() {
       </Panel>
 
       <Panel icon={<DatabaseBackup className="h-4 w-4" />} title="النسخ الاحتياطي والاستعادة" id="s-backup">
-        <div className="mb-4 flex gap-3 rounded-xl bg-gold-soft p-3 text-sm leading-6 text-[#5C4313] dark:bg-[#2a2516] dark:text-[#F3CF8E]">
+        <div className="mb-4 flex gap-3 rounded-xl bg-mint-soft p-3 text-sm leading-6 text-plum dark:bg-[#0A4250] dark:text-[#F0EDCC]">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
           <p>
             بياناتك محفوظة في هذا المتصفح على هذا الجهاز فقط، <b>ولا تتزامن مع أجهزة أخرى</b>. حذف بيانات المتصفح أو فقد الجهاز قد يؤدي إلى فقد سجلاتك
@@ -285,8 +285,8 @@ function ImportDialog({ parsed, onClose }: { parsed: ParsedBackup; onClose: () =
 
         <fieldset className="space-y-2">
           <legend className="label">طريقة الاستعادة</legend>
-          <label className={`flex cursor-pointer gap-3 rounded-xl border p-3 ${mode === 'merge' ? 'border-ink dark:border-[#7FC4D6]' : 'line'}`}>
-            <input type="radio" name="mode" className="mt-1 accent-[#123B49]" checked={mode === 'merge'} onChange={() => setMode('merge')} />
+          <label className={`flex cursor-pointer gap-3 rounded-xl border p-3 ${mode === 'merge' ? 'border-ink dark:border-[#ACC7B4]' : 'line'}`}>
+            <input type="radio" name="mode" className="mt-1 accent-[#02343F]" checked={mode === 'merge'} onChange={() => setMode('merge')} />
             <span><b>دمج البيانات</b><span className="muted block text-xs leading-5">يضيف الحركات غير الموجودة فقط دون تكرار المعرّفات، ولا يغيّر سجلاتك الحالية.</span></span>
           </label>
           <label className={`flex cursor-pointer gap-3 rounded-xl border p-3 ${mode === 'replace' ? 'border-expense' : 'line'}`}>

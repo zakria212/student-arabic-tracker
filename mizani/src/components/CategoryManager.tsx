@@ -127,7 +127,7 @@ function CategoryEditor({ initial, type, onClose, onSave }: {
               const I = ICONS[k];
               return (
                 <button key={k} type="button" onClick={() => setIcon(k)} aria-pressed={icon === k} aria-label={k}
-                  className={`flex aspect-square items-center justify-center rounded-xl border ${icon === k ? 'border-ink ring-2 ring-ink/20 dark:border-[#7FC4D6]' : 'line'}`}>
+                  className={`flex aspect-square items-center justify-center rounded-xl border ${icon === k ? 'border-ink ring-2 ring-ink/20 dark:border-[#ACC7B4]' : 'line'}`}>
                   <I className="h-5 w-5" strokeWidth={1.8} />
                 </button>
               );
@@ -139,7 +139,7 @@ function CategoryEditor({ initial, type, onClose, onSave }: {
           <div className="flex flex-wrap gap-2">
             {CATEGORY_COLORS.map((c) => (
               <button key={c} type="button" onClick={() => setColor(c)} aria-pressed={color === c} aria-label={`اللون ${c}`}
-                className={`h-9 w-9 rounded-full ${color === c ? 'ring-2 ring-offset-2 ring-ink dark:ring-offset-[#13252C]' : ''}`} style={{ background: c }} />
+                className={`h-9 w-9 rounded-full ${color === c ? 'ring-2 ring-offset-2 ring-ink dark:ring-offset-[#02343F]' : ''}`} style={{ background: c }} />
             ))}
           </div>
         </fieldset>

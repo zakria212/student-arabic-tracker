@@ -37,7 +37,7 @@ export function Sheet({ open, onClose, title, children, footer, size = 'md' }: P
       aria-label={title}
       onCancel={(e) => { e.preventDefault(); onClose(); }}
       onClick={(e) => { if (e.target === ref.current) onClose(); }}
-      className={`sheet m-0 mt-auto w-full max-w-none bg-transparent p-0 backdrop:bg-[#071a20]/55 md:m-auto ${size === 'lg' ? 'md:max-w-2xl' : 'md:max-w-lg'}`}
+      className={`sheet m-0 mt-auto w-full max-w-none bg-transparent p-0 backdrop:bg-[#011419]/55 md:m-auto ${size === 'lg' ? 'md:max-w-2xl' : 'md:max-w-lg'}`}
     >
       {open && (
         <div

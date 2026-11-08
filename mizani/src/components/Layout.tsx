@@ -1,4 +1,5 @@
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { EMBLEM_PATH } from './emblem';
 import { BarChart3, HandCoins, Home, ListOrdered, Plus, Settings } from 'lucide-react';
 
 const NAV = [
@@ -12,11 +13,10 @@ const NAV = [
 export function Logo({ className = 'h-9 w-9' }: { className?: string }) {
   return (
     <svg viewBox="0 0 512 512" className={className} aria-hidden>
-      <rect width="512" height="512" rx="120" fill="#123B49" />
-      <path d="M256 120v272" stroke="#D9AA58" strokeWidth="26" strokeLinecap="round" />
-      <path d="M136 176h240" stroke="#F7F9F8" strokeWidth="26" strokeLinecap="round" />
-      <path d="M136 176l-52 112h104zM376 176l-52 112h104z" fill="none" stroke="#F7F9F8" strokeWidth="22" strokeLinejoin="round" />
-      <rect x="196" y="384" width="120" height="24" rx="12" fill="#D9AA58" />
+      <rect width="512" height="512" rx="120" fill="#02343F" />
+      <g transform="translate(256 256) scale(0.2526) translate(-352.5 -712.5)">
+        <path d={EMBLEM_PATH} fill="#F0EDCC" fillRule="evenodd" />
+      </g>
     </svg>
   );
 }
@@ -66,7 +66,7 @@ export function Layout() {
         <>
           <button
             onClick={() => navigate('/transactions/new')}
-            className="no-print fixed z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-ink text-white shadow-lg ring-4 ring-[var(--bg)] transition active:scale-95 md:hidden dark:bg-[#2B7A90]"
+            className="no-print fixed z-40 flex h-14 w-14 items-center justify-center rounded-2xl bg-ink text-white shadow-lg ring-4 ring-[var(--bg)] transition active:scale-95 md:hidden dark:bg-[#0E5A6B]"
             style={{ left: 'calc(1rem + env(safe-area-inset-left, 0px))', bottom: 'calc(4.75rem + env(safe-area-inset-bottom, 0px))' }}
             aria-label="إضافة حركة"
           >

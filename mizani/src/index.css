@@ -15,23 +15,23 @@
 
 @layer base {
   :root {
-    --bg: #F7F9F8;
-    --surface: #FFFFFF;
-    --surface-2: #EEF3F1;
-    --text: #12262D;
-    --muted: #5C6F75;
-    --line: #DFE7E4;
-    --ink: #123B49;
+    --bg: #F7F5E6;
+    --surface: #FFFEF8;
+    --surface-2: #F0EDCC;
+    --text: #0F2329;
+    --muted: #56685F;
+    --line: #E4E0C4;
+    --ink: #02343F;
     color-scheme: light;
   }
   .dark {
-    --bg: #0C1A1F;
-    --surface: #13252C;
-    --surface-2: #1A3038;
-    --text: #E8F0EE;
-    --muted: #9AB0B5;
-    --line: #24404A;
-    --ink: #7FC4D6;
+    --bg: #01212A;
+    --surface: #02343F;
+    --surface-2: #0A4250;
+    --text: #F0EDCC;
+    --muted: #A9BDB2;
+    --line: #155262;
+    --ink: #ACC7B4;
     color-scheme: dark;
   }
   html { -webkit-text-size-adjust: 100%; }
@@ -42,7 +42,8 @@
     overflow-x: hidden;
   }
   h1, h2, h3 { @apply font-display; }
-  :focus-visible { outline: 2.5px solid #D9AA58; outline-offset: 2px; border-radius: 6px; }
+  :focus-visible { outline: 2.5px solid #331B3F; outline-offset: 2px; border-radius: 6px; }
+  .dark :focus-visible { outline-color: #ACC7B4; }
   input[type='date'] { min-height: 2.75rem; }
   /* الأرقام بعرض ثابت لسهولة المقارنة */
   .num { font-variant-numeric: tabular-nums; unicode-bidi: isolate; direction: ltr; display: inline-block; }
@@ -59,14 +60,14 @@
     border: 1px solid var(--line);
     color: var(--text);
   }
-  .field:focus { border-color: #123B49; box-shadow: 0 0 0 3px rgba(18,59,73,.15); }
-  .dark .field:focus { border-color: #7FC4D6; box-shadow: 0 0 0 3px rgba(127,196,214,.2); }
+  .field:focus { border-color: #02343F; box-shadow: 0 0 0 3px rgba(2,52,63,.15); }
+  .dark .field:focus { border-color: #ACC7B4; box-shadow: 0 0 0 3px rgba(172,199,180,.25); }
   .field[aria-invalid='true'] { border-color: #C94E55; }
   .label { @apply mb-1.5 block text-sm font-medium; }
   .btn {
     @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-xl px-4 text-[0.95rem] font-medium transition active:scale-[.98] disabled:opacity-50 disabled:pointer-events-none;
   }
-  .btn-primary { @apply btn bg-ink text-white hover:bg-ink-600 dark:bg-[#2B7A90] dark:hover:bg-[#33889f]; }
+  .btn-primary { @apply btn bg-ink text-white hover:bg-ink-600 dark:bg-[#0E5A6B] dark:hover:bg-[#136A7D]; }
   .btn-ghost { @apply btn; color: var(--text); }
   .btn-ghost:hover { background: var(--surface-2); }
   .btn-outline { @apply btn; border: 1px solid var(--line); background: var(--surface); color: var(--text); }
@@ -77,7 +78,7 @@
     border: 1px solid var(--line);
     background: var(--surface);
   }
-  .chip[aria-pressed='true'] { @apply border-ink bg-ink text-white dark:border-[#2B7A90] dark:bg-[#2B7A90]; }
+  .chip[aria-pressed='true'] { @apply border-ink bg-ink text-white dark:border-[#0E5A6B] dark:bg-[#0E5A6B]; }
   .text-ink-adaptive { color: var(--ink); }
 }
 
@@ -98,7 +99,7 @@
 
 @media print {
   @page { size: A4; margin: 14mm; }
-  :root, .dark { --bg: #fff; --surface: #fff; --surface-2: #f2f4f4; --text: #000; --muted: #555; --line: #cfd6d4; --ink: #123B49; color-scheme: light; }
+  :root, .dark { --bg: #fff; --surface: #fff; --surface-2: #f2f4f4; --text: #000; --muted: #555; --line: #cfd6d4; --ink: #02343F; color-scheme: light; }
   html, body { background: #fff !important; color: #000 !important; }
   .no-print { display: none !important; }
   .card { box-shadow: none !important; border-color: #ccc !important; break-inside: avoid; }
@@ -109,7 +110,7 @@
 }
 
 dialog.sheet { max-height: 100dvh; }
-dialog.sheet::backdrop { background: rgba(7, 26, 32, .55); }
+dialog.sheet::backdrop { background: rgba(1, 20, 25, .55); }
 @media (min-width: 768px) { dialog.sheet { max-height: 92dvh; } }
 
 /* طبقة التنبيهات: أعلى الشاشة على الجوال، وأسفلها على الحاسوب */

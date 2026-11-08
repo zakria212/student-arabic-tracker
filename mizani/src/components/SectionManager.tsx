@@ -119,7 +119,7 @@ function SectionEditor({ initial, onClose, onSave }: {
           <div className="flex flex-wrap gap-2">
             {SECTION_ICONS.map((k) => (
               <button key={k} type="button" onClick={() => setIcon(k)} aria-pressed={icon === k} aria-label={k}
-                className={`rounded-xl border p-1 ${icon === k ? 'border-ink ring-2 ring-ink/20 dark:border-[#7FC4D6]' : 'line'}`}>
+                className={`rounded-xl border p-1 ${icon === k ? 'border-ink ring-2 ring-ink/20 dark:border-[#ACC7B4]' : 'line'}`}>
                 <CategoryIcon icon={k} color={color} size="sm" />
               </button>
             ))}
@@ -130,7 +130,7 @@ function SectionEditor({ initial, onClose, onSave }: {
           <div className="flex flex-wrap gap-2">
             {CATEGORY_COLORS.map((c) => (
               <button key={c} type="button" onClick={() => setColor(c)} aria-pressed={color === c} aria-label={`اللون ${c}`}
-                className={`h-9 w-9 rounded-full ${color === c ? 'ring-2 ring-offset-2 ring-ink dark:ring-offset-[#13252C]' : ''}`} style={{ background: c }} />
+                className={`h-9 w-9 rounded-full ${color === c ? 'ring-2 ring-offset-2 ring-ink dark:ring-offset-[#02343F]' : ''}`} style={{ background: c }} />
             ))}
           </div>
         </fieldset>
