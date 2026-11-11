@@ -87,9 +87,32 @@ td.name{text-align:right;font-weight:700}
 .trend-controls select{width:auto}
 .tr-up{color:var(--success);font-weight:700}.tr-down{color:var(--danger);font-weight:700}.tr-flat{color:var(--muted);font-weight:700}
 .mono{font-family:Consolas,"Courier New",monospace;direction:ltr;text-align:left;unicode-bidi:plaintext;font-size:12px;background:#f3f7f8;border:1px solid var(--border);border-radius:8px;padding:8px 10px;display:inline-block}
+.stage-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.stage-card{border:1px solid var(--border);border-radius:12px;padding:10px 12px;background:#fff;text-align:right;cursor:pointer}
+.stage-card:hover{border-color:var(--primary2)}.stage-card.active{border-color:var(--primary);box-shadow:0 0 0 3px rgba(11,154,170,.12)}
+.stage-card .lv{font-size:12px;color:var(--muted)}.stage-card .pt{font-weight:700;margin:2px 0 6px}.stage-card .ct{font-size:20px;font-weight:800;color:var(--dark)}
+.les{min-width:34px;height:30px;padding:2px;border-radius:7px;border:1px solid #dbe8ea;background:#fff;font-weight:700;color:#9fb3b7}
+.les.done{background:#dff5e7;color:#168047;border-color:#bfe6cc}
+th.unit-head{background:#0a6a74;font-size:11px;white-space:normal;border-left:1px solid rgba(255,255,255,.25)}
+th.les-head{cursor:pointer;font-size:11px;min-width:34px}th.les-head:hover{background:#0b9aaa}
+.unit-row{display:grid;grid-template-columns:1fr 120px auto;gap:8px;align-items:center;margin-bottom:6px}
+.dist-row{display:grid;grid-template-columns:190px 1fr 40px;gap:10px;align-items:center;padding:5px 0;font-size:13px}
+.les.dua.learning{background:#fff1cc;color:#7a5200;border-color:#f0d98a}
+.les.dua.review{background:#ffe3e3;color:#a12a2a;border-color:#f3b9b9}
+th.dua-head{white-space:normal;min-width:74px;max-width:110px;line-height:1.4;font-weight:500}
+.print-only{display:none}@media print{.print-only{display:block}}
+.score-in{width:52px;padding:4px;text-align:center;font-size:12px}
+.qgroup{margin-top:12px}.qgroup h4{margin:0 0 8px;font-size:15px}
+.qchips{display:flex;flex-wrap:wrap;gap:6px}
+.qchip{border:1px solid var(--border);background:#fff;border-radius:9px;padding:5px 9px;font-size:13px;color:var(--text)}
+.qchip small{color:var(--muted);font-size:10px;margin-inline-start:5px}
+.qchip.done{background:#dff5e7;border-color:#bfe6cc;color:#14663a}
+.qchip.learning{background:#fff1cc;border-color:#f0d98a;color:#7a5200}
+.qchip.review{background:#ffe3e3;border-color:#f3b9b9;color:#a12a2a}
 @media(max-width:1050px){.cards{grid-template-columns:repeat(3,1fr)}.sidebar{width:220px}.grid4{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:760px){
  .app{display:block}.sidebar{width:100%;height:auto;position:relative}.sidebar-bottom{position:static;margin-top:12px}.nav{display:grid;grid-template-columns:repeat(2,1fr);gap:3px}.main{padding:12px}
+ .stage-cards{grid-template-columns:repeat(2,1fr)}.dist-row{grid-template-columns:120px 1fr 32px}.unit-row{grid-template-columns:1fr 90px auto}
  .cards{grid-template-columns:repeat(2,1fr)}.grid2,.grid3,.grid4{grid-template-columns:1fr}.topbar{align-items:flex-start;flex-direction:column}.topbar h2{font-size:21px}.kpi-row{grid-template-columns:repeat(2,1fr)}.sig-row{flex-direction:column;gap:10px}
 }
 @page{size:A4 landscape;margin:10mm}
@@ -111,6 +134,12 @@ td.name{text-align:right;font-weight:700}
   <nav class="nav">
     <button data-page="dashboard" class="active">لوحة التحكم</button>
     <button data-page="students">الطلاب</button>
+    <button data-page="progress">المستويات والتقدم</button>
+    <button data-page="quran">القرآن الكريم</button>
+    <button data-page="dua">الأدعية والأذكار</button>
+    <button data-page="subjects">الفقه والتوحيد</button>
+    <button data-page="homework">الواجبات اليومية</button>
+    <button data-page="exams">الاختبارات</button>
     <button data-page="attendance">السجل الشهري</button>
     <button data-page="profile">ملف الطالب الشامل</button>
     <button data-page="backup">الحفظ والتصدير</button>
@@ -123,14 +152,19 @@ td.name{text-align:right;font-weight:700}
 <div class="topbar">
   <h2 id="pageTitle">لوحة التحكم</h2>
   <div class="actions no-print">
-    <span id="syncStatus" class="badge blue" style="display:none">—</span>
+    <span id="syncStatus" class="badge blue" style="display:none;cursor:pointer" onclick="onSyncBadgeClick()" title="حالة المزامنة مع Google Drive">—</span>
     <span id="saveStatus" class="badge green">محفوظ</span>
     <button class="btn success" onclick="saveNow()">حفظ الآن</button>
     <button class="btn primary" onclick="exportBackup()">نسخة JSON</button>
   </div>
 </div>
+<div id="driveBanner" class="notice warn no-print" style="display:none;margin-bottom:16px;display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+  <span id="driveBannerText"></span>
+  <button class="btn warning" onclick="requestDriveToken(false)">إعادة الاتصال بجوجل درايف</button>
+</div>
 
 <section id="dashboard" class="page active">
+  <div id="gettingStarted" class="no-print"></div>
   <div class="cards">
     <div class="card metric"><div><div class="label">إجمالي الطلاب</div><div class="num" id="mStudents">0</div></div><span>👥</span></div>
     <div class="card metric"><div><div class="label">الحضور</div><div class="num" id="mPresent">0</div></div><span>✓</span></div>
@@ -147,22 +181,119 @@ td.name{text-align:right;font-weight:700}
     </div>
     <div class="panel"><div class="panel-title"><h3>الأكثر انتظامًا</h3></div><div id="topStudents"></div></div>
   </div>
+  <div class="panel"><div class="panel-title"><h3>توزيع الطلاب على المستويات</h3><button class="btn small" onclick="goPage('progress')">فتح صفحة التقدم</button></div><div id="stageDistribution"></div></div>
   <div class="panel"><div class="panel-title"><h3>تنبيهات المتابعة</h3></div><div id="alerts"></div></div>
 </section>
 
 <section id="students" class="page">
   <div class="panel">
-    <div class="panel-title"><h3>إدارة الطلاب</h3><button class="btn primary" onclick="openStudentModal()">+ إضافة طالب</button></div>
+    <div class="panel-title"><h3>إدارة الطلاب</h3><div class="actions no-print"><button class="btn" onclick="toggleBulkAdd()">+ إضافة عدة طلاب</button><button class="btn primary" onclick="openStudentModal()">+ إضافة طالب</button></div></div>
+    <div id="bulkAddPanel" class="card no-print" style="display:none;margin-bottom:14px">
+      <h3 style="margin-top:0">إضافة عدة طلاب دفعة واحدة</h3>
+      <p class="muted" style="margin-top:0">اكتب كل طالب في سطر. ويمكنك أن تضيف بعد الاسم فاصلة ثم رقم الهاتف أو البلد، مثل: <b>عبد الله أحمد، 966501234567، إندونيسيا</b>. ويمكن اللصق مباشرة من Excel.</p>
+      <textarea id="bulkNames" style="min-height:140px" placeholder="عبد الله أحمد&#10;محمد علي، 905551234567&#10;يوسف إبراهيم، نيجيريا"></textarea>
+      <div class="grid2" style="margin-top:10px">
+        <div><label>المرحلة</label><select id="bulkStage"></select></div>
+        <div><label>المجموعة</label><select id="bulkGroup"></select></div>
+      </div>
+      <div class="actions" style="margin-top:10px"><button class="btn primary" onclick="bulkAddStudents()">إضافة الطلاب</button><button class="btn" onclick="toggleBulkAdd(false)">إلغاء</button></div>
+    </div>
     <div class="toolbar no-print">
       <div class="search"><label>بحث</label><input id="studentSearch" oninput="renderStudents()" placeholder="اسم الطالب أو الرقم"></div>
-      <div><label>الصف</label><select id="studentGradeFilter" onchange="renderStudents()"><option value="">كل الصفوف</option></select></div>
+      <div><label>المجموعة</label><select id="studentGradeFilter" onchange="renderStudents()"><option value="">كل المجموعات</option></select></div>
+      <div><label>المرحلة</label><select id="studentStageFilter" onchange="renderStudents()"></select></div>
       <button class="btn" onclick="exportStudentsCSV()">تصدير CSV</button>
     </div>
-    <div class="table-wrap"><table><thead><tr><th>م</th><th>اسم الطالب</th><th>الصف</th><th>الشعبة</th><th>الرقم</th><th>الهاتف</th><th>ملاحظات</th><th>إجراءات</th></tr></thead><tbody id="studentsBody"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>م</th><th>اسم الطالب</th><th>المرحلة</th><th>التقدم في الجزء</th><th>المجموعة</th><th>الشعبة</th><th>الرقم</th><th>الهاتف</th><th>ملاحظات</th><th>إجراءات</th></tr></thead><tbody id="studentsBody"></tbody></table></div>
   </div>
 </section>
 
+<section id="progress" class="page">
+  <div class="panel">
+    <div class="panel-title"><h3>التقدم في المنهج</h3><div class="no-print actions"><button class="btn" onclick="exportProgressCSV()">CSV</button><button class="btn primary" onclick="printPage('progress')">طباعة / PDF</button></div></div>
+    <div id="stageCards" class="stage-cards no-print"></div>
+    <div class="toolbar no-print" style="margin-top:14px">
+      <div style="min-width:230px"><label>المرحلة</label><select id="progressStage" onchange="progressStageChanged()"></select></div>
+      <div class="search"><label>بحث عن طالب</label><input id="progressSearch" oninput="renderProgressGrid()" placeholder="اسم الطالب"></div>
+      <button class="btn" onclick="toggleCurriculumEditor()">✎ تعديل الوحدات والتسميات</button>
+    </div>
+    <div class="notice no-print">اضغط خانة الدرس لتسجيله منجزًا للطالب، واضغط رقم الدرس في رأس العمود لتسجيله لكل طلاب المرحلة دفعة واحدة، واضغط اسم الوحدة لتعديله. عند اكتمال الجزء يظهر زر «ترقية» لنقل الطالب إلى الجزء التالي.</div>
+    <div id="progressGrid" class="table-wrap" style="margin-top:14px"></div>
+  </div>
+  <div class="panel no-print" id="curriculumEditor" style="display:none"></div>
+</section>
+
+<section id="quran" class="page">
+  <div class="panel">
+    <div class="panel-title"><h3>القرآن الكريم: الحفظ والتسميع</h3><div class="no-print actions"><button class="btn" onclick="exportQuranCSV()">CSV</button><button class="btn primary" onclick="printPage('quran')">طباعة / PDF</button></div></div>
+    <div class="toolbar no-print">
+      <div style="min-width:230px"><label>الطالب</label><select id="quranStudent" onchange="quranStudentSel=this.value;renderQuran()"></select></div>
+      <div id="quranStageWrap" style="min-width:230px"><label>المرحلة</label><select id="quranStage" onchange="renderQuran()"></select></div>
+    </div>
+    <div id="quranView"></div>
+  </div>
+</section>
+
+<section id="dua" class="page">
+  <div class="panel">
+    <div class="panel-title"><h3>الأدعية والأذكار</h3><div class="no-print actions"><button class="btn" onclick="toggleDuaManager()">✎ إدارة القائمة</button><button class="btn" onclick="exportDuaCSV()">CSV</button><button class="btn primary" onclick="printPage('dua')">طباعة / PDF</button></div></div>
+    <div class="toolbar no-print">
+      <div style="min-width:220px"><label>المرحلة</label><select id="duaStage" onchange="renderDuaGrid()"></select></div>
+      <div style="min-width:220px"><label>القسم</label><select id="duaCat" onchange="renderDuaGrid()"></select></div>
+      <div class="search"><label>بحث عن طالب</label><input id="duaSearch" oninput="renderDuaGrid()" placeholder="اسم الطالب"></div>
+    </div>
+    <div class="notice no-print">اضغط الخانة لتغيير حال الطالب: <b>· لم يبدأ ← … يحفظه ← ✓ محفوظ ← ↺ يحتاج مراجعة</b>. واضغط عنوان الدعاء لعرض نصه بخط كبير تقرؤه مع الطلاب.</div>
+    <div id="duaGrid" class="table-wrap" style="margin-top:14px"></div>
+  </div>
+  <div class="panel no-print" id="duaManager" style="display:none"></div>
+</section>
+
+<section id="subjects" class="page">
+  <div class="panel">
+    <div class="panel-title"><h3>المواد الشرعية</h3><div class="no-print actions"><button class="btn" onclick="toggleSubjectManager()">✎ إعداد المادة ودروسها</button><button class="btn" onclick="exportSubjectCSV()">CSV</button><button class="btn primary" onclick="printPage('subjects')">طباعة / PDF</button></div></div>
+    <div id="subjectTabs" class="actions no-print" style="margin-bottom:12px"></div>
+    <p id="subjBookLine" class="muted" style="margin:0 0 10px"></p>
+    <div class="toolbar no-print">
+      <div id="subjModeBtns"><label>طريقة التسجيل</label><div class="actions"><button class="btn" data-mode="done" onclick="setSubjectMode('done')">✓ إنجاز الدروس</button><button class="btn" data-mode="score" onclick="setSubjectMode('score')">الدرجات</button></div></div>
+      <div style="min-width:220px"><label>المرحلة</label><select id="subjStage" onchange="renderSubjectGrid()"></select></div>
+      <div class="search"><label>بحث عن طالب</label><input id="subjSearch" oninput="renderSubjectGrid()" placeholder="اسم الطالب"></div>
+    </div>
+    <div class="notice no-print">في وضع «إنجاز الدروس»: اضغط الخانة لتسجيل الدرس للطالب، واضغط عنوان الدرس لتسجيله لكل الطلاب المعروضين. وفي وضع «الدرجات»: اكتب درجة الطالب في اختبار الدرس، فيُسجَّل الدرس منجزًا تلقائيًا.</div>
+    <div id="subjectGrid" class="table-wrap" style="margin-top:14px"></div>
+  </div>
+  <div class="panel no-print" id="subjectManager" style="display:none"></div>
+</section>
+
+<section id="homework" class="page">
+  <div class="panel">
+    <div class="panel-title"><h3>الواجبات اليومية</h3><div class="no-print actions"><button class="btn" onclick="exportHomeworkCSV()">CSV</button><button class="btn primary" onclick="printPage('homework')">طباعة / PDF</button></div></div>
+    <div class="toolbar no-print">
+      <div class="actions"><button class="btn" onclick="hwShiftWeek(-1)">→ الأسبوع السابق</button><button class="btn" onclick="hwThisWeek()">هذا الأسبوع</button><button class="btn" onclick="hwShiftWeek(1)">الأسبوع التالي ←</button></div>
+      <div style="min-width:180px"><label>المجموعة</label><select id="hwGroup" onchange="renderHomework()"></select></div>
+      <div style="min-width:200px"><label>المرحلة</label><select id="hwStage" onchange="renderHomework()"></select></div>
+    </div>
+    <p style="margin:0 0 8px"><b id="hwWeekLabel"></b></p>
+    <div class="notice no-print">اكتب عنوان واجب كل يوم في رأس عموده، واضغط خانة الطالب لتغيير حاله: <b>· ← ✓ حلّه ← ت متأخر ← ✗ لم يحلّه ← ع معذور</b>. واضغط اسم اليوم لتسجيل «حلّه» لكل من لم يُسجَّل، ثم عدّل المقصّرين وحدهم.</div>
+    <div id="hwGrid" class="table-wrap" style="margin-top:14px"></div>
+    <details class="no-print" style="margin-top:12px"><summary class="muted" style="cursor:pointer">أيام الدراسة في الأسبوع</summary><div id="hwDays" style="margin-top:8px"></div></details>
+  </div>
+</section>
+
+<section id="exams" class="page">
+  <div class="panel">
+    <div class="panel-title"><h3>الاختبارات والدرجات</h3><div class="no-print actions"><button class="btn" onclick="toggleExamManager()">✎ إدارة الاختبارات</button><button class="btn" onclick="exportExamsCSV()">CSV</button><button class="btn primary" onclick="printPage('exams')">طباعة / PDF</button></div></div>
+    <div class="toolbar no-print">
+      <div style="min-width:230px"><label>المرحلة</label><select id="examStage" onchange="examStageSel=this.value;renderExams()"></select></div>
+      <div><label>درجة النجاح (%)</label><input id="examPass" type="number" min="1" max="100" onchange="setExamPass(this.value)"></div>
+    </div>
+    <div class="notice no-print">لكل جزء اختبار بعد كل وحدتين، واختبار في نهايته. اكتب درجة الطالب في الخانة، وتظهر الدرجة الأقل من درجة النجاح باللون الأحمر.</div>
+    <div id="examGrid" class="table-wrap" style="margin-top:14px"></div>
+  </div>
+  <div class="panel no-print" id="examManager" style="display:none"></div>
+</section>
+
 <section id="attendance" class="page">
+  <div class="panel no-print" id="quickAtt"></div>
   <div class="panel">
     <div class="panel-title"><h3>السجل الشهري للحضور</h3><div class="no-print actions"><button class="btn" onclick="exportAttendanceCSV()">CSV</button><button class="btn primary" onclick="printPage('attendance')">طباعة / PDF</button></div></div>
     <div class="grid3 no-print">
@@ -177,7 +308,7 @@ td.name{text-align:right;font-weight:700}
 
 <section id="profile" class="page">
   <div class="panel no-print">
-    <div class="panel-title"><h3>ملف الطالب الشامل</h3><button class="btn primary" onclick="printPage('profile')">🖨️ طباعة الملف الشامل</button></div>
+    <div class="panel-title"><h3>ملف الطالب الشامل</h3><div class="actions"><button class="btn success" onclick="profileStudent.value?sendReportWhatsApp(profileStudent.value):toast('اختر طالبًا أولًا')">إرسال التقرير بواتساب</button><button class="btn" onclick="profileStudent.value?copyReport(profileStudent.value):toast('اختر طالبًا أولًا')">نسخ التقرير</button><button class="btn primary" onclick="printPage('profile')">🖨️ طباعة الملف الشامل</button></div></div>
     <div class="toolbar">
       <div style="min-width:240px"><label>اختر الطالب</label><select id="profileStudent" onchange="renderProfile()"></select></div>
     </div>
@@ -229,11 +360,11 @@ td.name{text-align:right;font-weight:700}
       <div><label>اسم المدرسة / الجهة</label><input id="schoolName"></div>
       <div><label>اسم المعلم</label><input id="teacherName"></div>
       <div><label>اسم السجل</label><input id="recordName"></div>
-      <div><label>الصف الافتراضي</label><select id="defaultGrade"></select></div>
+      <div><label>المجموعة الافتراضية</label><select id="defaultGrade"></select></div>
     </div>
     <hr style="border:0;border-top:1px solid var(--border);margin:18px 0">
-    <h3>الصفوف</h3>
-    <div class="toolbar"><input id="newGrade" placeholder="اسم الصف الجديد"><button class="btn primary" onclick="addGrade()">إضافة صف</button></div>
+    <h3>المجموعات (الفصول)</h3>
+    <div class="toolbar"><input id="newGrade" placeholder="اسم المجموعة الجديدة"><button class="btn primary" onclick="addGrade()">إضافة مجموعة</button></div>
     <div id="gradesList"></div>
     <div class="sticky-actions"><button class="btn success" onclick="saveSettings()">حفظ الإعدادات</button></div>
   </div>
@@ -250,6 +381,9 @@ td.name{text-align:right;font-weight:700}
         <li>في خانة "Authorized JavaScript origins" أضف هذا العنوان بالضبط: <span class="mono" id="originHint"></span></li>
         <li>انسخ الـ "Client ID" الناتج (ينتهي بـ .apps.googleusercontent.com) والصقه في الخانة أدناه.</li>
       </ol>
+      <b>مهم:</b> استعمل <b>نفس الـ Client ID في كل أجهزتك</b>؛ فجوجل لا تُظهر الملف إلا للتطبيق الذي أنشأه.
+      صلاحية الاتصال تنتهي كل ساعة تقريبًا، فيظهر أعلى الصفحة زر «إعادة الاتصال»، وتعديلاتك في أثناء ذلك محفوظة على الجهاز وتُدمج عند العودة دون أن تضيع.
+      ويُنشئ النظام في Drive نسخة يومية مؤرخة احتياطًا.
     </div>
     <div class="toolbar" style="margin-top:12px">
       <div style="min-width:320px"><label>Google OAuth Client ID</label><input id="gdriveClientId" placeholder="xxxxxxxxxx.apps.googleusercontent.com"></div>
@@ -268,10 +402,11 @@ td.name{text-align:right;font-weight:700}
   <input type="hidden" id="editStudentId">
   <div class="grid2">
    <div><label>اسم الطالب *</label><input id="studentName"></div>
-   <div><label>الصف</label><select id="studentGrade"></select></div>
+   <div><label>المرحلة الحالية (المستوى والجزء)</label><select id="studentStage"></select></div>
+   <div><label>المجموعة</label><select id="studentGrade"></select></div>
    <div><label>الشعبة</label><input id="studentSection" value="أ"></div>
    <div><label>رقم الطالب</label><input id="studentNumber"></div>
-   <div><label>رقم الهاتف</label><input id="studentPhone"></div>
+   <div><label>رقم الهاتف (واتساب، مع رمز الدولة)</label><input id="studentPhone" placeholder="مثل: 966501234567" dir="ltr"></div>
    <div><label>ملاحظات</label><input id="studentNotes"></div>
   </div>
   <div class="sticky-actions"><button class="btn primary" onclick="saveStudent()">حفظ</button><button class="btn" onclick="closeModal()">إلغاء</button></div>
@@ -288,6 +423,14 @@ td.name{text-align:right;font-weight:700}
   <div id="placementSkillsForm" style="margin-top:10px"></div>
   <div style="margin-top:10px"><label>ملاحظات</label><textarea id="placementNotes" placeholder="أي ملاحظات إضافية عن أداء الطالب أثناء التقييم..."></textarea></div>
   <div class="sticky-actions"><button class="btn primary" onclick="savePlacement()">حفظ التقييم</button><button class="btn" onclick="closePlacementModal()">إلغاء</button></div>
+ </div>
+</div>
+
+<div id="duaModalBack" class="modal-back" onclick="if(event.target===this)closeDuaModal()">
+ <div class="modal" style="text-align:center">
+  <div class="modal-head"><h3 id="duaShowTitle"></h3><button class="btn icon" onclick="closeDuaModal()">×</button></div>
+  <p id="duaShowText" style="font-size:30px;line-height:1.9;margin:10px 0 16px;font-family:'Thmanyah Serif Display','Thmanyah Serif Text',serif"></p>
+  <p id="duaShowSource" class="muted"></p>
  </div>
 </div>
 
@@ -352,6 +495,240 @@ const LEVEL_BANDS=[
 ];
 function recommendLevel(total){for(const b of LEVEL_BANDS)if(total<=b.max)return b;return LEVEL_BANDS[LEVEL_BANDS.length-1]}
 
+/* ================= المستويات والأجزاء والتقدم في المنهج =================
+   ٤ مستويات × جزآن = ٨ مراحل. لكل جزء وحدات، ولكل وحدة عدد من الدروس.
+   تقدم الطالب: data.progress[id] = {partId, done:{lessonId:date}, history:[...], u} */
+const LEVEL_NAMES=["المستوى الأول","المستوى الثاني","المستوى الثالث","المستوى الرابع"];
+const PART_NAMES=["الجزء الأول","الجزء الثاني"];
+let progressStageSel="",curriculumEditorOpen=false;
+// المنهج الجاهز: سلسلة العربية بين يديك (الطبعة الحديثة)، المستويان الأول والثاني.
+// المعرّفات ثابتة حتى يتطابق تقدم الطلاب بين كل الأجهزة.
+const L1_LESSONS=["الحوار الأول","الحوار الثاني","الحوار الثالث","المفردات","التراكيب","الأصوات والاستماع","الكلام","القراءة","الكتابة"];
+const L2_LESSONS=["الحوار الأول","الحوار الثاني","المفردات","القراءة الأولى","القراءة الثانية","ملاحظة نحوية ١","ملاحظة نحوية ٢","الأصوات","فهم المسموع","الكلام","التعبير الموجه","الخط","الإملاء"];
+const BUILTIN_PARTS={
+ L1P1:{start:1,lessonNames:L1_LESSONS,units:["التحية والتعارف","الأسرة","السكن","الحياة اليومية","الطعام والشراب","الصلاة","الدراسة","العمل"]},
+ L1P2:{start:9,lessonNames:L1_LESSONS,units:["التسوق","الجو","الناس والأماكن","الهوايات","السفر","الحج والعمرة","الصحة","العطلة"]},
+ L2P1:{start:1,lessonNames:L2_LESSONS,units:["العناية بالصحة","الترويح عن النفس","الحياة الزوجية","الحياة في المدينة","العلم والتعلم","المهن","اللغة العربية","الجوائز"]},
+ L2P2:{start:9,lessonNames:L2_LESSONS,units:["العالم قرية صغيرة","النظافة","الإسلام","الشباب","العالم الإسلامي","الأمن","التلوث","الطاقة"]}
+};
+function builtinUnits(partId){
+ const b=BUILTIN_PARTS[partId];if(!b)return null;
+ return {lessonNames:[...b.lessonNames],units:b.units.map((name,i)=>({id:`${partId.toLowerCase()}u${b.start+i}`,name:"الوحدة "+(b.start+i)+": "+name,lessons:b.lessonNames.length}))};
+}
+// المراحل الظاهرة: المستويات المعتمدة فقط، مع إظهار أي مرحلة فيها طلاب حتى لا يختفي أحد
+function visibleStages(){
+ const n=data.curriculum.activeLevels||4,used=new Set(data.students.map(s=>getProg(s.id).partId));
+ return allStages().filter(s=>s.li<n||used.has(s.id));
+}
+function normalizeCurriculum(c){
+ const out={u:0,book:"العربية بين يديك",activeLevels:2,levels:[]};
+ if(c&&typeof c==="object"){out.u=+c.u||0;if(typeof c.book==="string")out.book=c.book;const a=+c.activeLevels;if(a>=1&&a<=4)out.activeLevels=a}
+ LEVEL_NAMES.forEach((ln,i)=>{
+   const lv=(c&&Array.isArray(c.levels)&&c.levels[i])||{};
+   out.levels.push({id:"L"+(i+1),name:lv.name||ln,parts:PART_NAMES.map((pn,j)=>{
+     const p=(Array.isArray(lv.parts)&&lv.parts[j])||{};
+     return {id:`L${i+1}P${j+1}`,name:p.name||pn,lessonNames:Array.isArray(p.lessonNames)?p.lessonNames:[],
+       units:Array.isArray(p.units)?p.units.map(u=>({id:u.id||uid(),name:u.name||"",lessons:Math.max(1,Math.min(30,+u.lessons||1))})):[]};
+   })});
+ });
+ // يُملأ الجزء من المنهج الجاهز فقط إذا لم يعدّل المعلم المنهج من قبل (u=0) وكان الجزء فارغًا
+ if(!out.u)out.levels.forEach(lv=>lv.parts.forEach(p=>{
+   if(p.units.length)return;
+   const b=builtinUnits(p.id);if(!b)return;
+   p.units=b.units;if(!p.lessonNames.length)p.lessonNames=b.lessonNames;
+ }));
+ return out;
+}
+function today(){return new Date().toLocaleDateString("en-CA")}
+function allStages(){const r=[];data.curriculum.levels.forEach((lv,i)=>lv.parts.forEach((p,j)=>r.push({id:p.id,level:lv,part:p,li:i,pj:j,label:lv.name+" — "+p.name})));return r}
+function stageById(id){return allStages().find(s=>s.id===id)||null}
+function nextStage(id){const a=allStages(),i=a.findIndex(s=>s.id===id),n=a[i+1];return i>=0&&n&&n.li<(data.curriculum.activeLevels||4)?n:null}
+function stageLessons(part){const out=[];part.units.forEach((u,ui)=>{for(let k=1;k<=u.lessons;k++)out.push({id:u.id+"-"+k,unit:u,ui,k,name:part.lessonNames[k-1]||("الدرس "+k)})});return out}
+function prog(sid){let p=data.progress[sid];if(!p)p=data.progress[sid]={partId:"",done:{},history:[],u:0};p.done??={};p.history??=[];return p}
+function getProg(sid){return data.progress[sid]||{partId:"",done:{},history:[],u:0}}
+function stageStats(sid){
+ const p=getProg(sid),st=stageById(p.partId);
+ if(!st)return {st:null,total:0,done:0,pct:0,next:null};
+ const ls=stageLessons(st.part),done=ls.filter(l=>p.done&&p.done[l.id]).length;
+ return {st,total:ls.length,done,pct:ls.length?Math.round(done/ls.length*100):0,next:ls.find(l=>!(p.done&&p.done[l.id]))||null};
+}
+function stageOptions(sel){return `<option value="">— بدون مرحلة —</option>`+visibleStages().map(s=>`<option value="${s.id}" ${s.id===sel?"selected":""}>${esc(s.label)}</option>`).join("")}
+function setStudentStage(sid,partId,note){
+ const p=prog(sid);if(p.partId===partId)return;
+ p.history.push({partId,from:p.partId||"",date:today(),note:note||""});
+ p.partId=partId;p.u=Date.now();
+}
+function goPage(id){const b=document.querySelector(`.nav button[data-page="${id}"]`);if(b)b.click()}
+
+function progressStageChanged(){progressStageSel=progressStage.value;renderProgress()}
+function renderStageCards(){
+ const counts={};data.students.forEach(s=>{const id=getProg(s.id).partId||"";counts[id]=(counts[id]||0)+1});
+ stageCards.innerHTML=visibleStages().map(s=>`<div class="stage-card ${s.id===progressStageSel?"active":""}" onclick="progressStageSel='${s.id}';renderProgress()"><div class="lv">${esc(s.level.name)}</div><div class="pt">${esc(s.part.name)}</div><div class="ct">${counts[s.id]||0} <small class="muted">طالب</small></div></div>`).join("")
+  +(counts[""]?`<div class="stage-card ${progressStageSel==="none"?"active":""}" onclick="progressStageSel='none';renderProgress()"><div class="lv">لم تُحدَّد</div><div class="pt">بدون مرحلة</div><div class="ct">${counts[""]} <small class="muted">طالب</small></div></div>`:"");
+}
+function renderProgress(){
+ if(!document.getElementById("progressStage"))return;
+ if(progressStageSel==="none"&&!data.students.some(s=>!getProg(s.id).partId))progressStageSel="";
+ if(!progressStageSel){
+   const c={};data.students.forEach(s=>{const id=getProg(s.id).partId;if(id)c[id]=(c[id]||0)+1});
+   progressStageSel=Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||(data.students.length?"none":"L1P1");
+ }
+ progressStage.innerHTML=visibleStages().map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join("")+`<option value="none">طلاب بدون مرحلة</option>`;
+ progressStage.value=progressStageSel;
+ renderStageCards();renderProgressGrid();
+ if(curriculumEditorOpen)renderCurriculumEditor();else curriculumEditor.style.display="none";
+}
+function renderProgressGrid(){
+ const out=progressGrid,q=(progressSearch.value||"").trim().toLowerCase();
+ if(progressStageSel==="none"){
+   const arr=data.students.filter(s=>!getProg(s.id).partId&&(!q||s.name.toLowerCase().includes(q)));
+   out.innerHTML=`<table style="min-width:0"><thead><tr><th>#</th><th>اسم الطالب</th><th>تحديد المرحلة</th></tr></thead><tbody>${arr.map((s,i)=>`<tr><td>${i+1}</td><td class="name">${esc(s.name)}</td><td><select onchange="assignStage('${s.id}',this.value)">${stageOptions("")}</select></td></tr>`).join("")||'<tr><td colspan="3" class="empty">كل الطلاب محددة مراحلهم.</td></tr>'}</tbody></table>`;
+   return;
+ }
+ const st=stageById(progressStageSel);if(!st){out.innerHTML="";return}
+ const ls=stageLessons(st.part);
+ const arr=data.students.filter(s=>getProg(s.id).partId===st.id&&(!q||s.name.toLowerCase().includes(q)));
+ if(!ls.length){out.innerHTML=`<div class="empty">لم تُضَف وحدات «${esc(st.label)}» بعد.<br><button class="btn primary no-print" style="margin-top:10px" onclick="openCurriculumEditor()">إضافة الوحدات والدروس</button></div>`;return}
+ const unitHeads=st.part.units.map((u,ui)=>`<th class="unit-head" colspan="${u.lessons}" title="${esc(u.name)} (اضغط لتعديل الاسم)" style="cursor:pointer" onclick="renameUnitPrompt(${ui})">${esc(u.name||"وحدة")} ✎</th>`).join("");
+ const lesHeads=ls.map(l=>`<th class="les-head" title="${esc(l.name)}: اضغط لتسجيله لكل طلاب المرحلة" onclick="toggleLessonAll('${l.id}')">${l.k}</th>`).join("");
+ const nx=nextStage(st.id);
+ const body=arr.map((s,i)=>{
+   const p=getProg(s.id),x=stageStats(s.id);
+   const cells=ls.map(l=>{const d=p.done&&p.done[l.id];return `<td><button class="les ${d?"done":""}" title="${esc(l.unit.name)}: ${esc(l.name)}${d?" (أُنجز "+d+")":""}" onclick="toggleLesson('${s.id}','${l.id}')">${d?"✓":"·"}</button></td>`}).join("");
+   return `<tr><td>${i+1}</td><td class="name">${esc(s.name)}</td><td><b>${x.pct}%</b><div class="progress" style="width:70px;margin:3px auto 0"><span style="width:${x.pct}%"></span></div></td><td style="white-space:normal;min-width:120px">${x.next?esc(x.next.unit.name)+"<br><small class='muted'>"+esc(x.next.name)+"</small>":"<span class='badge green'>أتمّ الجزء</span>"}</td>${cells}<td class="no-print">${nx?`<button class="btn small ${x.pct===100?"success":""}" onclick="promoteStudent('${s.id}')">ترقية ←</button>`:""}</td></tr>`;
+ }).join("");
+ out.innerHTML=`<table><thead><tr><th rowspan="2">#</th><th rowspan="2">اسم الطالب</th><th rowspan="2">الإنجاز</th><th rowspan="2">الدرس التالي</th>${unitHeads}<th rowspan="2" class="no-print">إجراء</th></tr><tr>${lesHeads}</tr></thead><tbody>${body||`<tr><td colspan="${ls.length+5}" class="empty">لا يوجد طلاب في هذه المرحلة. حدّد مرحلة الطالب من صفحة «الطلاب» ← تعديل، أو من بطاقة «بدون مرحلة».</td></tr>`}</tbody></table>`;
+}
+function toggleLesson(sid,lid){
+ const p=prog(sid);if(p.done[lid])delete p.done[lid];else p.done[lid]=today();
+ p.u=Date.now();touch();renderProgressGrid();
+}
+function toggleLessonAll(lid){
+ const arr=data.students.filter(s=>getProg(s.id).partId===progressStageSel);if(!arr.length)return;
+ const all=arr.every(s=>getProg(s.id).done?.[lid]);
+ if(all&&!confirm("إلغاء تسجيل هذا الدرس لكل طلاب المرحلة؟"))return;
+ const t=Date.now();
+ arr.forEach(s=>{const p=prog(s.id);if(all)delete p.done[lid];else if(!p.done[lid])p.done[lid]=today();p.u=t});
+ touch();renderProgressGrid();toast(all?"أُلغي تسجيل الدرس":"سُجّل الدرس لـ "+arr.length+" طالب");
+}
+function promoteStudent(sid){
+ const s=data.students.find(x=>x.id===sid),nx=nextStage(getProg(sid).partId);if(!s||!nx)return;
+ const x=stageStats(sid);
+ const ea=examAvg(sid,getProg(sid).partId);
+ if(!confirm(`ترقية «${s.name}» إلى ${nx.label}؟`+(x.pct<100?`\nتنبيه: أنجز ${x.pct}% فقط من الجزء الحالي.`:"")+(ea!==null?`\nمعدل اختباراته في هذا الجزء: ${ea}%`+(ea<data.exams.pass?" (أقل من درجة النجاح)":""):"")))return;
+ setStudentStage(sid,nx.id,"ترقية");saveData({snapshot:true});renderProgress();renderStudents();toast("تمت الترقية إلى "+nx.label);
+}
+function assignStage(sid,partId){if(!partId)return;setStudentStage(sid,partId,"تحديد المرحلة");saveData();renderProgress();renderStudents()}
+
+/* ---- محرر الوحدات ---- */
+function openCurriculumEditor(){
+ if(progressStageSel==="none"){toast("اختر مرحلة أولًا");return}
+ curriculumEditorOpen=true;renderCurriculumEditor();curriculumEditor.scrollIntoView({behavior:"smooth",block:"start"});
+}
+function toggleCurriculumEditor(){if(curriculumEditorOpen){curriculumEditorOpen=false;curriculumEditor.style.display="none"}else openCurriculumEditor()}
+function renderCurriculumEditor(){
+ const st=stageById(progressStageSel),el=curriculumEditor;
+ if(!st){el.style.display="none";return}
+ el.style.display="";
+ const p=st.part;
+ el.innerHTML=`<div class="panel-title"><h3>وحدات ${esc(st.label)}</h3><button class="btn small" onclick="toggleCurriculumEditor()">إغلاق</button></div>
+ <div class="grid4">
+  <div><label>المستويات المعتمدة في البرنامج</label><select onchange="ceSetActive(this.value)">${[1,2,3,4].map(n=>`<option value="${n}" ${n===(data.curriculum.activeLevels||4)?"selected":""}>${n===1?"المستوى الأول فقط":"من الأول إلى "+["","","الثاني","الثالث","الرابع"][n]}</option>`).join("")}</select></div>
+  <div><label>اسم الكتاب أو السلسلة (لكل المستويات)</label><input value="${esc(data.curriculum.book)}" onchange="ceSetBook(this.value)"></div>
+  <div><label>اسم المستوى</label><input value="${esc(st.level.name)}" onchange="ceSetLevelName(this.value)"></div>
+  <div><label>اسم الجزء</label><input value="${esc(p.name)}" onchange="ceSetPartName(this.value)"></div>
+ </div>
+ <h4 style="margin:16px 0 4px">أسماء الدروس داخل كل وحدة</h4>
+ <p class="muted" style="margin:0 0 8px">تنطبق على كل وحدات هذا الجزء. الخانة الفارغة تظهر «الدرس ورقمه». تعديل الأسماء لا يمسّ ما سجّلته للطلاب.</p>
+ <div class="grid4">${Array.from({length:Math.max(p.lessonNames.length,...p.units.map(u=>u.lessons),1)},(_,k)=>`<div><label>الدرس ${k+1}</label><input value="${esc(p.lessonNames[k]||"")}" placeholder="الدرس ${k+1}" onchange="ceLessonName(${k},this.value)"></div>`).join("")}</div>
+ ${BUILTIN_PARTS[p.id]?`<div class="toolbar" style="margin-top:10px"><button class="btn" onclick="ceRestoreNames()">↺ استعادة التسميات الأصلية لهذا الجزء</button></div>`:""}
+ <div class="notice" style="margin-top:12px">إنشاء سريع: يضيف عددًا من الوحدات دفعة واحدة، ثم تعدّل أسماءها.
+  <div class="toolbar" style="margin:8px 0 0"><div><label>عدد الوحدات</label><input id="ceUnitsN" type="number" min="1" max="40" value="8"></div><div><label>دروس كل وحدة</label><input id="ceLessonsN" type="number" min="1" max="30" value="${p.lessonNames.length||3}"></div><button class="btn primary" onclick="ceGenerate()">إنشاء</button></div>
+ </div>
+ <h4 style="margin:16px 0 8px">الوحدات (${p.units.length}) <small class="muted">الاسم، وعدد الدروس</small></h4>
+ ${p.units.map((u,i)=>`<div class="unit-row"><input value="${esc(u.name)}" placeholder="اسم الوحدة ${i+1}" onchange="ceUnit(${i},'name',this.value)"><input type="number" min="1" max="30" value="${u.lessons}" title="عدد الدروس" onchange="ceUnit(${i},'lessons',this.value)"><div style="white-space:nowrap"><button class="btn small" title="نقل للأعلى" onclick="ceMove(${i},-1)">↑</button> <button class="btn small danger" title="حذف" onclick="ceRemove(${i})">×</button></div></div>`).join("")||"<div class='empty'>لا توجد وحدات بعد.</div>"}
+ <div class="toolbar" style="margin-top:10px"><button class="btn" onclick="ceAdd()">+ إضافة وحدة</button><button class="btn" onclick="ceCopyToAll()">نسخ هيكل هذا الجزء إلى الأجزاء الفارغة</button></div>`;
+}
+function ceStage(){return stageById(progressStageSel)}
+function ceSave(){data.curriculum.u=Date.now();saveData();renderProgress()}
+function ceSetActive(v){data.curriculum.activeLevels=Math.max(1,Math.min(4,+v||2));if(!visibleStages().some(s=>s.id===progressStageSel))progressStageSel="";ceSave();populateGrades();renderStudents()}
+function ceSetBook(v){data.curriculum.book=v.trim();ceSave()}
+function ceSetLevelName(v){const st=ceStage();st.level.name=v.trim()||LEVEL_NAMES[st.li];ceSave();renderStudents()}
+function ceSetPartName(v){const st=ceStage();st.part.name=v.trim()||PART_NAMES[st.pj];ceSave();renderStudents()}
+function ceSetLessonNames(v){ceStage().part.lessonNames=v.split(/[،,]/).map(x=>x.trim()).filter(Boolean);ceSave()}
+function ceLessonName(k,v){
+ const names=ceStage().part.lessonNames;
+ while(names.length<=k)names.push("");
+ names[k]=v.trim();
+ while(names.length&&!names[names.length-1])names.pop();
+ ceSave();
+}
+function renameUnitPrompt(ui){
+ const st=stageById(progressStageSel),u=st&&st.part.units[ui];if(!u)return;
+ const v=prompt("اسم الوحدة الجديد:",u.name);
+ if(v===null||!v.trim()||v.trim()===u.name)return;
+ u.name=v.trim();ceSave();toast("تم تعديل اسم الوحدة");
+}
+// يعيد الأسماء الأصلية فقط (الوحدات والدروس)، ويبقي الوحدات المضافة وتقدم الطلاب كما هما
+function ceRestoreNames(){
+ const p=ceStage().part,b=builtinUnits(p.id);if(!b)return;
+ if(!confirm("استعادة الأسماء الأصلية لوحدات هذا الجزء ودروسه؟ لن يتغير تقدم الطلاب."))return;
+ const orig=new Map(b.units.map(u=>[u.id,u.name]));
+ p.units.forEach(u=>{if(orig.has(u.id))u.name=orig.get(u.id)});
+ p.lessonNames=[...b.lessonNames];
+ ceSave();toast("استُعيدت التسميات الأصلية");
+}
+function ceGenerate(){
+ const part=ceStage().part,n=Math.max(1,Math.min(40,+ceUnitsN.value||1)),m=Math.max(1,Math.min(30,+ceLessonsN.value||1)),start=part.units.length;
+ if(start&&!confirm(`سيُضاف ${n} وحدة بعد الوحدات الحالية (${start}). متابعة؟`))return;
+ for(let i=1;i<=n;i++)part.units.push({id:uid(),name:"الوحدة "+(start+i),lessons:m});
+ ceSave();
+}
+function ceUnit(i,f,v){const u=ceStage().part.units[i];if(!u)return;if(f==="lessons")u.lessons=Math.max(1,Math.min(30,+v||1));else u.name=v.trim();ceSave()}
+function ceMove(i,d){const a=ceStage().part.units;if(i+d<0||i+d>=a.length)return;[a[i],a[i+d]]=[a[i+d],a[i]];ceSave()}
+function ceRemove(i){const a=ceStage().part.units;if(!confirm(`حذف «${a[i].name}»؟ ستختفي دروسها من سجل الطلاب.`))return;a.splice(i,1);ceSave()}
+function ceAdd(){const p=ceStage().part;p.units.push({id:uid(),name:"الوحدة "+(p.units.length+1),lessons:p.lessonNames.length||3});ceSave()}
+function ceCopyToAll(){
+ const src=ceStage().part;if(!src.units.length){toast("أضف وحدات لهذا الجزء أولًا");return}
+ let n=0;
+ visibleStages().forEach(s=>{if(s.id!==src.id&&!s.part.units.length){s.part.units=src.units.map((u,i)=>({id:uid(),name:"الوحدة "+(i+1),lessons:u.lessons}));if(!s.part.lessonNames.length)s.part.lessonNames=[...src.lessonNames];n++}});
+ if(!n){toast("لا توجد أجزاء فارغة");return}
+ ceSave();toast("نُسخ الهيكل إلى "+n+" أجزاء، فعدّل أسماء وحداتها");
+}
+
+/* ---- العرض في اللوحة والملف الشامل والتصدير ---- */
+function renderStageDistribution(){
+ const el=document.getElementById("stageDistribution");if(!el)return;
+ if(!data.students.length){el.innerHTML="<div class='empty'>لا يوجد طلاب بعد.</div>";return}
+ const c={};data.students.forEach(s=>{const id=getProg(s.id).partId||"";c[id]=(c[id]||0)+1});
+ const rows=visibleStages().map(s=>({label:s.label,n:c[s.id]||0,id:s.id}));if(c[""])rows.push({label:"بدون مرحلة",n:c[""],id:"none"});
+ const max=Math.max(1,...rows.map(r=>r.n));
+ el.innerHTML=rows.map(r=>`<div class="dist-row" style="cursor:pointer" onclick="progressStageSel='${r.id}';goPage('progress')"><span>${esc(r.label)}</span><div class="progress"><span style="width:${Math.round(r.n/max*100)}%"></span></div><b>${r.n}</b></div>`).join("");
+}
+function progressProfileHtml(id){
+ const x=stageStats(id),p=getProg(id),hist=(p.history||[]).slice().reverse();
+ let adopt="";const latest=(data.levelAssessments[id]||[])[0];
+ if(latest){const li=LEVEL_BANDS.findIndex(b=>b.label===latest.level);if(li>=0&&(!x.st||x.st.li!==li))adopt=`<button class="btn small no-print" onclick="assignStageFromPlacement('${id}','L${li+1}P1')">نقله إلى ${esc(stageById("L"+(li+1)+"P1").label)} حسب آخر تقييم</button>`}
+ return `<div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px">
+  <div class="panel-title"><h3>التقدم في المنهج${data.curriculum.book?" — "+esc(data.curriculum.book):""}</h3>${adopt}</div>
+  ${x.st?`<div class="kpi-row" style="grid-template-columns:repeat(3,1fr)">
+     <div class="kpi"><span>المرحلة الحالية</span><b style="font-size:16px">${esc(x.st.label)}</b></div>
+     <div class="kpi"><span>إنجاز الجزء</span><b>${x.total?x.pct+"%":"—"}</b><small class="muted">${x.done} من ${x.total} درسًا</small></div>
+     <div class="kpi"><span>الدرس التالي</span><b style="font-size:15px">${x.next?esc(x.next.unit.name)+" — "+esc(x.next.name):x.total?"أتمّ الجزء":"—"}</b></div>
+    </div>`:`<div class="empty">لم تُحدَّد مرحلة الطالب بعد.</div>`}
+  ${hist.length?`<div class="table-wrap" style="margin-top:12px"><table style="min-width:0"><thead><tr><th>التاريخ</th><th>انتقل إلى</th><th>من</th><th>السبب</th></tr></thead><tbody>${hist.map(h=>`<tr><td>${esc(h.date)}</td><td>${esc(stageById(h.partId)?.label||"بدون مرحلة")}</td><td>${esc(stageById(h.from)?.label||"—")}</td><td>${esc(h.note||"")}</td></tr>`).join("")}</tbody></table></div>`:""}
+ </div>`;
+}
+function assignStageFromPlacement(sid,target){
+ if(!confirm("نقل الطالب إلى "+stageById(target).label+"؟"))return;
+ setStudentStage(sid,target,"حسب تقييم المستوى");saveData({snapshot:true});refreshProfileReport();renderStudents();renderProgress();
+}
+function exportProgressCSV(){
+ const rows=[["م","اسم الطالب","المرحلة","الدروس المنجزة","مجموع الدروس","النسبة","الدرس التالي"],...data.students.map((s,i)=>{const x=stageStats(s.id);return [i+1,s.name,x.st?x.st.label:"",x.done,x.total,x.total?x.pct+"%":"",x.next?x.next.unit.name+" — "+x.next.name:""]})];
+ downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8","التقدم_"+today()+".csv");
+}
+
+
 function buildTrendSVG(chrono,metricKey,maxVal){
  const W=600,H=200,PAD=34;
  const vals=chrono.map(en=>metricKey==="total"?en.total:en.scores[metricKey]);
@@ -398,12 +775,757 @@ function renderPlacementTrend(id,list){
   </div>`;
 }
 
+/* ================= القرآن الكريم: الحفظ والتسميع =================
+   data.quran[studentId] = {surahs:{رقم السورة:{st,to,d,u}}, log:[{id,date,type,surah,from,to,grade,mistakes,note}]}
+   st: learning (يحفظها الآن) | done (محفوظة) | review (تحتاج مراجعة)، to: آخر آية حفظها */
+const SURAHS=[["الفاتحة",7],["البقرة",286],["آل عمران",200],["النساء",176],["المائدة",120],["الأنعام",165],["الأعراف",206],["الأنفال",75],["التوبة",129],["يونس",109],["هود",123],["يوسف",111],["الرعد",43],["إبراهيم",52],["الحجر",99],["النحل",128],["الإسراء",111],["الكهف",110],["مريم",98],["طه",135],["الأنبياء",112],["الحج",78],["المؤمنون",118],["النور",64],["الفرقان",77],["الشعراء",227],["النمل",93],["القصص",88],["العنكبوت",69],["الروم",60],["لقمان",34],["السجدة",30],["الأحزاب",73],["سبأ",54],["فاطر",45],["يس",83],["الصافات",182],["ص",88],["الزمر",75],["غافر",85],["فصلت",54],["الشورى",53],["الزخرف",89],["الدخان",59],["الجاثية",37],["الأحقاف",35],["محمد",38],["الفتح",29],["الحجرات",18],["ق",45],["الذاريات",60],["الطور",49],["النجم",62],["القمر",55],["الرحمن",78],["الواقعة",96],["الحديد",29],["المجادلة",22],["الحشر",24],["الممتحنة",13],["الصف",14],["الجمعة",11],["المنافقون",11],["التغابن",18],["الطلاق",12],["التحريم",12],["الملك",30],["القلم",52],["الحاقة",52],["المعارج",44],["نوح",28],["الجن",28],["المزمل",20],["المدثر",56],["القيامة",40],["الإنسان",31],["المرسلات",50],["النبأ",40],["النازعات",46],["عبس",42],["التكوير",29],["الانفطار",19],["المطففين",36],["الانشقاق",25],["البروج",22],["الطارق",17],["الأعلى",19],["الغاشية",26],["الفجر",30],["البلد",20],["الشمس",15],["الليل",21],["الضحى",11],["الشرح",8],["التين",8],["العلق",19],["القدر",5],["البينة",8],["الزلزلة",8],["العاديات",11],["القارعة",11],["التكاثر",8],["العصر",3],["الهمزة",9],["الفيل",5],["قريش",4],["الماعون",7],["الكوثر",3],["الكافرون",6],["النصر",3],["المسد",5],["الإخلاص",4],["الفلق",5],["الناس",6]];
+const TOTAL_AYAHS=SURAHS.reduce((a,s)=>a+s[1],0);
+function surahName(n){return (SURAHS[n-1]||["؟"])[0]}
+function surahAyahs(n){return (SURAHS[n-1]||[0,0])[1]}
+// ترتيب الحفظ المعتاد للمبتدئين: الفاتحة ثم من الناس صعودًا
+const Q_ORDER=[1,...Array.from({length:113},(_,i)=>114-i)];
+const Q_GROUPS=[{label:"جزء عمّ",from:78,to:114,desc:true},{label:"جزء تبارك",from:67,to:77,desc:true},{label:"جزء قد سمع",from:58,to:66,desc:true},{label:"بقية السور",from:1,to:57,desc:false}];
+const Q_STATUS={"":"لم يبدأ",learning:"يحفظها الآن",done:"محفوظة",review:"تحتاج مراجعة"};
+const Q_GRADES=["ممتاز","جيد جدًا","جيد","مقبول","يُعاد"];
+const Q_STALE_DAYS=14;
+let quranStudentSel="",quranGroupOpen={plan:true,0:false,1:false,2:false,3:false},quranPlanEdit=false;
+// مقرر الحفظ: افتراضيًا من الأعلى (87) إلى الناس (114)، ويُحفظ من الناس صعودًا
+function quranPlan(){const p=data.settings.quranPlan||{};let from=+p.from||87,to=+p.to||114;if(from>to)[from,to]=[to,from];return {from,to,fatiha:!!p.fatiha}}
+function planSurahs(){const p=quranPlan(),out=[];if(p.fatiha&&p.from>1)out.push(1);for(let n=p.to;n>=p.from;n--)out.push(n);return out}
+function setQuranPlan(f,v){const p=Object.assign(quranPlan(),{[f]:f==="fatiha"?!!v:Math.max(1,Math.min(114,+v||1))});data.settings.quranPlan=p;data.settings.u=Date.now();saveData();renderQuran()}
+function quranPlanLabel(){const p=quranPlan(),n=planSurahs().length;return `من سورة ${surahName(p.from)} إلى سورة ${surahName(p.to)}${p.fatiha&&p.from>1?" مع الفاتحة":""} (${n} سورة)`}
+
+function qd(sid){let q=data.quran[sid];if(!q)q=data.quran[sid]={surahs:{},log:[]};q.surahs??={};q.log??=[];return q}
+function getQ(sid){return data.quran[sid]||{surahs:{},log:[]}}
+function setSurah(sid,n,patch){
+ const q=qd(sid),s=Object.assign({},q.surahs[n]||{},patch,{u:Date.now()});
+ if(!s.st){s.st="";s.to=0}
+ q.surahs[n]=s;
+}
+function qStats(sid){
+ const q=getQ(sid);let ay=0,done=0,review=0,learning=null,lu=-1;
+ for(const [k,s] of Object.entries(q.surahs||{})){
+   const n=+k,c=surahAyahs(n);
+   if(s.st==="done"||s.st==="review"){ay+=c;done++;if(s.st==="review")review++}
+   else if(s.st==="learning"){ay+=Math.min(c,+s.to||0);if((s.u||0)>lu){lu=s.u||0;learning=n}}
+ }
+ const log=q.log||[],last=log.length?log.reduce((a,b)=>(a.date>b.date||(a.date===b.date&&a.id>b.id))?a:b):null;
+ const days=last?Math.floor((Date.now()-new Date(last.date+"T12:00:00").getTime())/864e5):null;
+ const plan=planSurahs(),planDone=plan.filter(n=>["done","review"].includes((q.surahs||{})[n]?.st)).length;
+ return {ay,done,review,learning,pct:Math.round(ay/TOTAL_AYAHS*1000)/10,last,days,sessions:log.length,planDone,planTotal:plan.length,planPct:plan.length?Math.round(planDone/plan.length*100):0};
+}
+function qNextSurah(sid){
+ const st=qStats(sid);if(st.learning)return st.learning;
+ const s=getQ(sid).surahs,free=n=>!s[n]||!s[n].st;
+ return planSurahs().find(free)||Q_ORDER.find(free)||1;
+}
+function mergeQuran(a,b,del){
+ a=a||{surahs:{},log:[]};b=b||{surahs:{},log:[]};
+ const out={surahs:{},log:[]};
+ for(const n of new Set([...Object.keys(a.surahs||{}),...Object.keys(b.surahs||{})])){
+   const x=(a.surahs||{})[n],y=(b.surahs||{})[n];
+   out.surahs[n]=clone(!y||(x&&stamp(x)>=stamp(y))?x:y);
+ }
+ const m=new Map();(b.log||[]).forEach(e=>m.set(e.id,e));(a.log||[]).forEach(e=>m.set(e.id,e));
+ out.log=clone([...m.values()].filter(e=>!del["q:"+e.id]).sort((x,y)=>String(x.date).localeCompare(String(y.date))));
+ return out;
+}
+
+/* ---- الصفحة ---- */
+function renderQuran(){
+ const sel=document.getElementById("quranStudent");if(!sel)return;
+ if(quranStudentSel&&!data.students.some(s=>s.id===quranStudentSel))quranStudentSel="";
+ sel.innerHTML=`<option value="">كل الطلاب (نظرة عامة)</option>`+data.students.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+ sel.value=quranStudentSel;
+ const stSel=document.getElementById("quranStage"),old=stSel.value;
+ stSel.innerHTML=`<option value="">كل المراحل</option>`+visibleStages().map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join("");
+ stSel.value=old;
+ document.getElementById("quranStageWrap").style.display=quranStudentSel?"none":"";
+ if(quranStudentSel)renderQuranStudent();else renderQuranClass();
+}
+function openQuranStudent(sid){quranStudentSel=sid;goPage("quran")}
+function renderQuranClass(){
+ const stage=document.getElementById("quranStage").value;
+ const arr=data.students.filter(s=>!stage||getProg(s.id).partId===stage);
+ const rows=arr.map((s,i)=>{const x=qStats(s.id);const stale=x.days!==null&&x.days>=Q_STALE_DAYS;
+   return `<tr><td>${i+1}</td><td class="name">${esc(s.name)}</td><td><b>${x.planDone}</b>/${x.planTotal}<div class="progress" style="width:70px;margin:3px auto 0"><span style="width:${x.planPct}%"></span></div></td><td>${x.done}</td><td>${x.ay}</td><td>${x.learning?esc(surahName(x.learning))+" <small class='muted'>("+(getQ(s.id).surahs[x.learning].to||0)+"/"+surahAyahs(x.learning)+")</small>":"—"}</td><td>${x.review?`<span class="badge red">${x.review}</span>`:"0"}</td><td>${x.last?`${esc(x.last.date)} <span class="badge ${x.last.grade==="يُعاد"?"red":"green"}">${esc(x.last.grade)}</span>`:"—"}</td><td>${x.days===null?"—":stale?`<span class="badge yellow">${x.days} يومًا</span>`:x.days+" يومًا"}</td><td class="no-print"><button class="btn small primary" onclick="openQuranStudent('${s.id}')">فتح وتسميع</button></td></tr>`}).join("");
+ const p=quranPlan(),opts=(sel)=>SURAHS.map((v,i)=>`<option value="${i+1}" ${i+1===sel?"selected":""}>${i+1}. ${esc(v[0])}</option>`).join("");
+ const planBox=`<div class="notice no-print" style="margin-bottom:12px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span><b>مقرر الحفظ:</b> ${esc(quranPlanLabel())}. يبدأ الطالب من آخر سورة في المقرر صعودًا.</span><button class="btn small" onclick="quranPlanEdit=!quranPlanEdit;renderQuran()">${quranPlanEdit?"إغلاق":"✎ تعديل المقرر"}</button>
+  ${quranPlanEdit?`<div class="grid3" style="width:100%"><div><label>من سورة</label><select onchange="setQuranPlan('from',this.value)">${opts(p.from)}</select></div><div><label>إلى سورة</label><select onchange="setQuranPlan('to',this.value)">${opts(p.to)}</select></div><div><label>&nbsp;</label><label style="display:flex;gap:6px;align-items:center;font-size:13px;color:var(--text)"><input type="checkbox" style="width:auto" ${p.fatiha?"checked":""} onchange="setQuranPlan('fatiha',this.checked)"> إضافة الفاتحة في أول المقرر</label></div></div>`:""}</div>`;
+ quranView.innerHTML=planBox+`<div class="table-wrap"><table><thead><tr><th>#</th><th>اسم الطالب</th><th>من المقرر</th><th>كل السور المحفوظة</th><th>آيات محفوظة</th><th>يحفظ الآن</th><th>تحتاج مراجعة</th><th>آخر تسميع</th><th>منذ</th><th class="no-print">إجراء</th></tr></thead><tbody>${rows||'<tr><td colspan="10" class="empty">لا يوجد طلاب.</td></tr>'}</tbody></table></div>`;
+}
+function renderQuranStudent(){
+ const s=data.students.find(x=>x.id===quranStudentSel);if(!s){quranView.innerHTML="";return}
+ const x=qStats(s.id),q=getQ(s.id),next=qNextSurah(s.id);
+ const kpis=`<div class="kpi-row">
+   <div class="kpi"><span>من المقرر</span><b>${x.planDone} / ${x.planTotal}</b><small class="muted">${x.planPct}%</small></div>
+   <div class="kpi"><span>كل السور المحفوظة</span><b>${x.done}</b><small class="muted">${x.pct}% من القرآن</small></div>
+   <div class="kpi"><span>الآيات المحفوظة</span><b>${x.ay}</b></div>
+   <div class="kpi"><span>تحتاج مراجعة</span><b>${x.review}</b></div>
+   <div class="kpi"><span>آخر تسميع</span><b style="font-size:15px">${x.last?esc(x.last.date):"—"}</b>${x.days!==null?`<small class="muted">منذ ${x.days} يومًا</small>`:""}</div></div>`;
+ const form=`<div class="panel no-print" style="box-shadow:none;border:1px solid var(--border);margin-top:15px">
+   <div class="panel-title"><h3>تسجيل تسميع</h3></div>
+   <div class="grid4">
+     <div><label>التاريخ</label><input type="date" id="qsDate" value="${today()}"></div>
+     <div><label>النوع</label><select id="qsType" onchange="qsSurahChanged()"><option value="new">حفظ جديد</option><option value="review">مراجعة</option></select></div>
+     <div><label>السورة</label><select id="qsSurah" onchange="qsSurahChanged()">${SURAHS.map((v,i)=>`<option value="${i+1}" ${i+1===next?"selected":""}>${i+1}. ${esc(v[0])} (${v[1]})</option>`).join("")}</select></div>
+     <div><label>التقدير</label><select id="qsGrade">${Q_GRADES.map(g=>`<option>${g}</option>`).join("")}</select></div>
+     <div><label>من الآية</label><input type="number" id="qsFrom" min="1"></div>
+     <div><label>إلى الآية</label><input type="number" id="qsTo" min="1"></div>
+     <div><label>عدد الأخطاء</label><input type="number" id="qsMistakes" min="0" value="0"></div>
+     <div><label>ملاحظة</label><input id="qsNote" placeholder="اختياري: التجويد، المخارج…"></div>
+   </div>
+   <div class="sticky-actions" style="position:static"><button class="btn primary" onclick="saveQuranSession()">حفظ التسميع</button></div>
+   <p class="muted" style="margin:8px 0 0">الحفظ الجديد يحدّث موضع الطالب في السورة تلقائيًا، وإذا بلغ آخرها صارت «محفوظة». المراجعة بتقدير «يُعاد» أو بثلاثة أخطاء فأكثر تجعل السورة «تحتاج مراجعة».</p>
+ </div>`;
+ const chipOf=n=>{const st=q.surahs[n]?.st||"",to=q.surahs[n]?.to||0;return `<button class="qchip ${st}" title="${esc(surahName(n))}: ${Q_STATUS[st]}. اضغط لتغيير الحالة" onclick="cycleSurah(${n})">${esc(surahName(n))}<small>${st==="learning"?to+"/"+surahAyahs(n):surahAyahs(n)}</small></button>`};
+ const plan=planSurahs();
+ const planGroup=`<div class="qgroup"><h4 onclick="quranGroupOpen.plan=!quranGroupOpen.plan;renderQuranStudent()" style="cursor:pointer">${quranGroupOpen.plan?"▾":"▸"} المقرر <small class="muted">${x.planDone} من ${x.planTotal}، بترتيب الحفظ</small></h4>${quranGroupOpen.plan?`<div class="qchips">${plan.map(chipOf).join("")}</div>`:""}</div>`;
+ const groups=planGroup+Q_GROUPS.map((g,gi)=>{
+   const nums=[];for(let n=g.from;n<=g.to;n++)nums.push(n);if(g.desc)nums.reverse();
+   const doneN=nums.filter(n=>["done","review"].includes(q.surahs[n]?.st)).length;
+   const chips=nums.map(n=>{const st=q.surahs[n]?.st||"",to=q.surahs[n]?.to||0;
+     return `<button class="qchip ${st}" title="${esc(surahName(n))}: ${Q_STATUS[st]}. اضغط لتغيير الحالة" onclick="cycleSurah(${n})">${esc(surahName(n))}<small>${st==="learning"?to+"/"+surahAyahs(n):surahAyahs(n)}</small></button>`}).join("");
+   return `<div class="qgroup"><h4 onclick="quranGroupOpen[${gi}]=!quranGroupOpen[${gi}];renderQuranStudent()" style="cursor:pointer">${quranGroupOpen[gi]?"▾":"▸"} ${g.label} <small class="muted">${doneN} من ${nums.length}</small></h4>${quranGroupOpen[gi]?`<div class="qchips">${chips}</div>`:""}</div>`;
+ }).join("");
+ const log=[...(q.log||[])].reverse().slice(0,40);
+ const logHtml=log.length?`<div class="table-wrap"><table style="min-width:0"><thead><tr><th>التاريخ</th><th>النوع</th><th>السورة</th><th>الآيات</th><th>التقدير</th><th>الأخطاء</th><th>ملاحظة</th><th class="no-print"></th></tr></thead><tbody>${log.map(e=>`<tr><td>${esc(e.date)}</td><td>${e.type==="new"?"حفظ جديد":"مراجعة"}</td><td>${esc(surahName(e.surah))}</td><td>${e.from}–${e.to}</td><td><span class="badge ${e.grade==="يُعاد"?"red":e.grade==="ممتاز"?"green":"blue"}">${esc(e.grade)}</span></td><td>${e.mistakes||0}</td><td style="white-space:normal">${esc(e.note||"")}</td><td class="no-print"><button class="btn small danger" onclick="deleteQuranSession('${e.id}')">×</button></td></tr>`).join("")}</tbody></table></div>`:`<div class="empty">لا توجد جلسات تسميع بعد.</div>`;
+ quranView.innerHTML=`<div class="report-head" style="margin-bottom:12px"><div><div class="report-title">${esc(s.name)}</div><div class="report-meta">${esc(stageStats(s.id).st?.label||"")}</div></div><button class="btn no-print" onclick="quranStudentSel='';renderQuran()">← كل الطلاب</button></div>
+  ${kpis}${form}
+  <div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px"><div class="panel-title"><h3>خريطة الحفظ</h3><div class="legend"><span class="qchip">لم يبدأ</span><span class="qchip learning">يحفظها الآن</span><span class="qchip done">محفوظة</span><span class="qchip review">تحتاج مراجعة</span></div></div>${groups}</div>
+  <div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px"><div class="panel-title"><h3>سجل التسميع</h3></div>${logHtml}</div>`;
+ qsSurahChanged();
+}
+function qsSurahChanged(){
+ const n=+qsSurah.value,c=surahAyahs(n),s=getQ(quranStudentSel).surahs[n]||{};
+ qsFrom.max=c;qsTo.max=c;
+ if(qsType.value==="new"){const f=Math.min(c,(+s.to||0)+1);qsFrom.value=s.st==="done"?1:f;qsTo.value=c}
+ else{qsFrom.value=1;qsTo.value=c}
+}
+function saveQuranSession(){
+ const sid=quranStudentSel;if(!sid)return;
+ const n=+qsSurah.value,c=surahAyahs(n);
+ const from=Math.max(1,Math.min(c,+qsFrom.value||1)),to=Math.max(from,Math.min(c,+qsTo.value||c));
+ const e={id:uid(),date:qsDate.value||today(),type:qsType.value,surah:n,from,to,grade:qsGrade.value,mistakes:Math.max(0,+qsMistakes.value||0),note:qsNote.value.trim()};
+ qd(sid).log.push(e);
+ const s=getQ(sid).surahs[n]||{};
+ if(e.type==="new"){
+   if(e.grade!=="يُعاد"){const nt=Math.max(+s.to||0,to);setSurah(sid,n,{to:nt,st:nt>=c?"done":"learning",d:e.date})}
+   else if(!s.st)setSurah(sid,n,{st:"learning",to:+s.to||0});
+ }else{
+   if(e.grade==="يُعاد"||e.mistakes>=3)setSurah(sid,n,{st:"review"});
+   else if(s.st==="review"&&from<=1&&to>=c)setSurah(sid,n,{st:"done"});
+ }
+ saveData();renderQuranStudent();updateDashboard();
+ toast("حُفظ التسميع: "+surahName(n)+" "+from+"–"+to);
+}
+function deleteQuranSession(id){
+ if(!confirm("حذف هذه الجلسة من السجل؟ لن تتغير حالة السورة في خريطة الحفظ."))return;
+ const q=qd(quranStudentSel);q.log=q.log.filter(e=>e.id!==id);data.deleted["q:"+id]=Date.now();
+ saveData();renderQuranStudent();
+}
+function cycleSurah(n){
+ const sid=quranStudentSel,s=getQ(sid).surahs[n]||{},c=surahAyahs(n);
+ const nextSt={"":"learning",learning:"done",done:"review",review:""}[s.st||""];
+ setSurah(sid,n,{st:nextSt,to:nextSt==="learning"?(+s.to||0):nextSt?c:0,d:today()});
+ saveData();renderQuranStudent();
+}
+function quranProfileHtml(id){
+ const x=qStats(id),q=getQ(id);
+ const doneList=Q_ORDER.filter(n=>["done","review"].includes(q.surahs[n]?.st)).map(n=>esc(surahName(n))+(q.surahs[n].st==="review"?"*":""));
+ const recent=[...(q.log||[])].reverse().slice(0,5);
+ return `<div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px">
+  <div class="panel-title"><h3>القرآن الكريم</h3><button class="btn small no-print" onclick="openQuranStudent('${id}')">فتح صفحة الحفظ</button></div>
+  <div class="kpi-row"><div class="kpi"><span>من المقرر</span><b>${x.planDone} / ${x.planTotal}</b></div><div class="kpi"><span>كل السور المحفوظة</span><b>${x.done}</b></div><div class="kpi"><span>الآيات</span><b>${x.ay}</b></div><div class="kpi"><span>يحفظ الآن</span><b style="font-size:15px">${x.learning?esc(surahName(x.learning)):"—"}</b></div><div class="kpi"><span>جلسات التسميع</span><b>${x.sessions}</b></div></div>
+  ${doneList.length?`<p style="line-height:2;margin:12px 0 0"><b>المحفوظ:</b> ${doneList.join("، ")}${x.review?' <small class="muted">(* تحتاج مراجعة)</small>':""}</p>`:""}
+  ${recent.length?`<div class="table-wrap" style="margin-top:10px"><table style="min-width:0"><thead><tr><th>التاريخ</th><th>النوع</th><th>السورة</th><th>الآيات</th><th>التقدير</th></tr></thead><tbody>${recent.map(e=>`<tr><td>${esc(e.date)}</td><td>${e.type==="new"?"حفظ جديد":"مراجعة"}</td><td>${esc(surahName(e.surah))}</td><td>${e.from}–${e.to}</td><td>${esc(e.grade)}</td></tr>`).join("")}</tbody></table></div>`:""}
+ </div>`;
+}
+function quranAlertsHtml(){
+ return data.students.map(s=>({s,x:qStats(s.id)})).filter(o=>o.x.days!==null&&o.x.days>=Q_STALE_DAYS)
+  .map(o=>`<div class="notice warn" style="margin-bottom:8px">الطالب <b>${esc(o.s.name)}</b> لم يُسمّع القرآن منذ ${o.x.days} يومًا. <a href="#" onclick="openQuranStudent('${o.s.id}');return false">فتح</a></div>`).join("");
+}
+function exportQuranCSV(){
+ const rows=[["م","اسم الطالب","من المقرر","السور المحفوظة","الآيات المحفوظة","النسبة من القرآن","يحفظ الآن","تحتاج مراجعة","آخر تسميع","عدد الجلسات"],...data.students.map((s,i)=>{const x=qStats(s.id);return [i+1,s.name,x.planDone+"/"+x.planTotal,x.done,x.ay,x.pct+"%",x.learning?surahName(x.learning):"",x.review,x.last?x.last.date:"",x.sessions]})];
+ downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8","القرآن_"+today()+".csv");
+}
+
+/* ================= الأدعية والأذكار =================
+   data.adhkar = {u, items:[{id,cat,title,text,source}]}   (القائمة، يعدّلها المعلم)
+   data.duaProgress[studentId] = {items:{id:{st,d,u}}}   st: learning | done | review */
+const DUA_CATS=["أذكار اليوم والليلة","أذكار الطهارة والصلاة","أذكار الصباح والمساء والنوم","أدعية من القرآن"];
+const BUILTIN_ADHKAR=[
+ {id:"d01",cat:0,title:"الاستيقاظ من النوم",text:"الحمد لله الذي أحيانا بعد ما أماتنا وإليه النشور",source:"البخاري"},
+ {id:"d02",cat:0,title:"قبل الطعام",text:"بسم الله. فإن نسي في أوله قال: بسم الله أوله وآخره",source:"أبو داود والترمذي"},
+ {id:"d03",cat:0,title:"بعد الطعام",text:"الحمد لله الذي أطعمني هذا ورزقنيه من غير حول مني ولا قوة",source:"أبو داود والترمذي وابن ماجه"},
+ {id:"d04",cat:0,title:"لبس الثوب",text:"الحمد لله الذي كساني هذا الثوب ورزقنيه من غير حول مني ولا قوة",source:"أبو داود والترمذي"},
+ {id:"d05",cat:0,title:"الخروج من المنزل",text:"بسم الله، توكلت على الله، ولا حول ولا قوة إلا بالله",source:"أبو داود والترمذي"},
+ {id:"d06",cat:0,title:"دخول الخلاء",text:"بسم الله، اللهم إني أعوذ بك من الخبث والخبائث",source:"البخاري ومسلم"},
+ {id:"d07",cat:0,title:"الخروج من الخلاء",text:"غفرانك",source:"أبو داود والترمذي"},
+ {id:"d08",cat:0,title:"العطاس",text:"يقول العاطس: الحمد لله، ويقول له أخوه: يرحمك الله، فيرد: يهديكم الله ويصلح بالكم",source:"البخاري"},
+ {id:"d09",cat:0,title:"السلام ورده",text:"السلام عليكم ورحمة الله وبركاته — وعليكم السلام ورحمة الله وبركاته",source:""},
+ {id:"d10",cat:0,title:"الركوب والسفر",text:"سبحان الذي سخر لنا هذا وما كنا له مقرنين وإنا إلى ربنا لمنقلبون",source:"الزخرف: 13–14، ومسلم"},
+ {id:"d11",cat:0,title:"كفارة المجلس",text:"سبحانك اللهم وبحمدك، أشهد أن لا إله إلا أنت، أستغفرك وأتوب إليك",source:"أبو داود والترمذي"},
+ {id:"d12",cat:1,title:"قبل الوضوء",text:"بسم الله",source:"أبو داود"},
+ {id:"d13",cat:1,title:"بعد الوضوء",text:"أشهد أن لا إله إلا الله وحده لا شريك له، وأشهد أن محمدًا عبده ورسوله",source:"مسلم"},
+ {id:"d14",cat:1,title:"دخول المسجد",text:"اللهم افتح لي أبواب رحمتك",source:"مسلم"},
+ {id:"d15",cat:1,title:"الخروج من المسجد",text:"اللهم إني أسألك من فضلك",source:"مسلم"},
+ {id:"d16",cat:1,title:"دعاء الاستفتاح",text:"سبحانك اللهم وبحمدك، وتبارك اسمك، وتعالى جدك، ولا إله غيرك",source:"أبو داود والترمذي"},
+ {id:"d17",cat:1,title:"الركوع والسجود",text:"في الركوع: سبحان ربي العظيم. وفي السجود: سبحان ربي الأعلى",source:"مسلم"},
+ {id:"d18",cat:1,title:"بين السجدتين",text:"رب اغفر لي، رب اغفر لي",source:"أبو داود وابن ماجه"},
+ {id:"d19",cat:1,title:"التشهد",text:"التحيات لله، والصلوات والطيبات، السلام عليك أيها النبي ورحمة الله وبركاته، السلام علينا وعلى عباد الله الصالحين، أشهد أن لا إله إلا الله، وأشهد أن محمدًا عبده ورسوله",source:"البخاري ومسلم"},
+ {id:"d20",cat:1,title:"الصلاة الإبراهيمية",text:"اللهم صل على محمد وعلى آل محمد، كما صليت على إبراهيم وعلى آل إبراهيم، إنك حميد مجيد، اللهم بارك على محمد وعلى آل محمد، كما باركت على إبراهيم وعلى آل إبراهيم، إنك حميد مجيد",source:"البخاري"},
+ {id:"d21",cat:1,title:"بعد السلام من الصلاة",text:"أستغفر الله (ثلاثًا)، اللهم أنت السلام ومنك السلام، تباركت يا ذا الجلال والإكرام",source:"مسلم"},
+ {id:"d22",cat:1,title:"التسبيح بعد الصلاة",text:"سبحان الله (33)، والحمد لله (33)، والله أكبر (33)، وتمام المئة: لا إله إلا الله وحده لا شريك له، له الملك وله الحمد وهو على كل شيء قدير",source:"مسلم"},
+ {id:"d23",cat:2,title:"آية الكرسي",text:"البقرة: 255",source:"القرآن الكريم"},
+ {id:"d24",cat:2,title:"المعوذات",text:"سورة الإخلاص والفلق والناس، ثلاث مرات صباحًا ومساءً",source:"أبو داود والترمذي"},
+ {id:"d25",cat:2,title:"بسم الله الذي لا يضر مع اسمه شيء",text:"بسم الله الذي لا يضر مع اسمه شيء في الأرض ولا في السماء وهو السميع العليم (ثلاث مرات)",source:"أبو داود والترمذي"},
+ {id:"d26",cat:2,title:"سيد الاستغفار",text:"اللهم أنت ربي لا إله إلا أنت، خلقتني وأنا عبدك، وأنا على عهدك ووعدك ما استطعت، أعوذ بك من شر ما صنعت، أبوء لك بنعمتك علي، وأبوء بذنبي، فاغفر لي، فإنه لا يغفر الذنوب إلا أنت",source:"البخاري"},
+ {id:"d27",cat:2,title:"عند النوم",text:"باسمك اللهم أموت وأحيا",source:"البخاري"},
+ {id:"d28",cat:3,title:"ربنا آتنا في الدنيا حسنة",text:"ربنا آتنا في الدنيا حسنة وفي الآخرة حسنة وقنا عذاب النار",source:"البقرة: 201"},
+ {id:"d29",cat:3,title:"رب زدني علمًا",text:"رب زدني علمًا",source:"طه: 114"},
+ {id:"d30",cat:3,title:"رب اشرح لي صدري",text:"رب اشرح لي صدري، ويسر لي أمري، واحلل عقدة من لساني، يفقهوا قولي",source:"طه: 25–28"},
+ {id:"d31",cat:3,title:"ربنا لا تزغ قلوبنا",text:"ربنا لا تزغ قلوبنا بعد إذ هديتنا وهب لنا من لدنك رحمة إنك أنت الوهاب",source:"آل عمران: 8"},
+ {id:"d32",cat:3,title:"رب اجعلني مقيم الصلاة",text:"رب اجعلني مقيم الصلاة ومن ذريتي ربنا وتقبل دعاء",source:"إبراهيم: 40"}
+];
+const DUA_NEXT={"":"learning",learning:"done",done:"review",review:""};
+const DUA_MARK={"":"·",learning:"…",done:"✓",review:"↺"};
+const DUA_LABEL={"":"لم يبدأ",learning:"يحفظه الآن",done:"محفوظ",review:"يحتاج مراجعة"};
+let duaManagerOpen=false;
+
+function normalizeAdhkar(x){
+ if(x&&typeof x==="object"&&Array.isArray(x.items)&&(+x.u||x.items.length))
+   return {u:+x.u||0,items:x.items.filter(i=>i&&i.id).map(i=>({id:String(i.id),cat:Math.max(0,Math.min(DUA_CATS.length-1,+i.cat||0)),title:String(i.title||""),text:String(i.text||""),source:String(i.source||"")}))};
+ return {u:0,items:clone(BUILTIN_ADHKAR)};
+}
+function duaItems(){return data.adhkar.items}
+function dp(sid){let p=data.duaProgress[sid];if(!p)p=data.duaProgress[sid]={items:{}};p.items??={};return p}
+function getDp(sid){return data.duaProgress[sid]||{items:{}}}
+function duaStats(sid){
+ const it=getDp(sid).items,ids=new Set(duaItems().map(i=>i.id));let done=0,learning=0,review=0;
+ for(const [id,s] of Object.entries(it)){if(!ids.has(id))continue;if(s.st==="done")done++;else if(s.st==="learning")learning++;else if(s.st==="review"){review++;done++}}
+ const total=ids.size;return {done,learning,review,total,pct:total?Math.round(done/total*100):0};
+}
+function mergeDuaProgress(a,b){
+ a=a||{items:{}};b=b||{items:{}};const out={items:{}};
+ for(const id of new Set([...Object.keys(a.items||{}),...Object.keys(b.items||{})])){
+   const x=(a.items||{})[id],y=(b.items||{})[id];out.items[id]=clone(!y||(x&&stamp(x)>=stamp(y))?x:y);
+ }
+ return out;
+}
+
+/* ---- الصفحة ---- */
+function renderDua(){
+ if(!document.getElementById("duaGrid"))return;
+ const stSel=duaStage,old=stSel.value;
+ stSel.innerHTML=`<option value="">كل المراحل</option>`+visibleStages().map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join("");
+ stSel.value=old;
+ const cSel=duaCat,oldC=cSel.value;
+ cSel.innerHTML=`<option value="">كل الأقسام</option>`+DUA_CATS.map((c,i)=>`<option value="${i}">${esc(c)}</option>`).join("");
+ cSel.value=oldC;
+ renderDuaGrid();
+ duaManager.style.display=duaManagerOpen?"":"none";if(duaManagerOpen)renderDuaManager();
+}
+function renderDuaGrid(){
+ const stage=duaStage.value,cat=duaCat.value,q=(duaSearch.value||"").trim().toLowerCase();
+ const students=data.students.filter(s=>(!stage||getProg(s.id).partId===stage)&&(!q||s.name.toLowerCase().includes(q)));
+ const items=duaItems().filter(i=>cat===""||i.cat===+cat);
+ if(!items.length){duaGrid.innerHTML="<div class='empty'>لا توجد أدعية في هذا القسم.</div>";return}
+ const cats=[...new Set(items.map(i=>i.cat))];
+ const catHeads=cats.map(c=>`<th class="unit-head" colspan="${items.filter(i=>i.cat===c).length}">${esc(DUA_CATS[c])}</th>`).join("");
+ const ordered=cats.flatMap(c=>items.filter(i=>i.cat===c));
+ const heads=ordered.map(i=>`<th class="les-head dua-head" title="اضغط لعرض النص" onclick="showDua('${i.id}')">${esc(i.title)}</th>`).join("");
+ const body=students.map((s,n)=>{const it=getDp(s.id).items,x=duaStats(s.id);
+   return `<tr><td>${n+1}</td><td class="name">${esc(s.name)}</td><td><b>${x.done}</b>/${x.total}</td>${ordered.map(i=>{const st=it[i.id]?.st||"";return `<td><button class="les dua ${st}" title="${esc(i.title)}: ${DUA_LABEL[st]}" onclick="cycleDua('${s.id}','${i.id}')">${DUA_MARK[st]}</button></td>`}).join("")}</tr>`}).join("");
+ duaGrid.innerHTML=`<table><thead><tr><th rowspan="2">#</th><th rowspan="2">اسم الطالب</th><th rowspan="2">المحفوظ</th>${catHeads}</tr><tr>${heads}</tr></thead><tbody>${body||`<tr><td colspan="${ordered.length+3}" class="empty">لا يوجد طلاب.</td></tr>`}</tbody></table>`;
+}
+function cycleDua(sid,id){
+ const p=dp(sid),cur=p.items[id]?.st||"";
+ p.items[id]={st:DUA_NEXT[cur],d:today(),u:Date.now()};
+ touch();renderDuaGrid();
+}
+function showDua(id){
+ const i=duaItems().find(x=>x.id===id);if(!i)return;
+ duaShowTitle.textContent=i.title;duaShowText.textContent=i.text||"—";duaShowSource.textContent=i.source?"المصدر: "+i.source:"";
+ duaModalBack.classList.add("show");
+}
+function closeDuaModal(){duaModalBack.classList.remove("show")}
+function toggleDuaManager(){duaManagerOpen=!duaManagerOpen;renderDua();if(duaManagerOpen)duaManager.scrollIntoView({behavior:"smooth",block:"start"})}
+function renderDuaManager(){
+ duaManager.innerHTML=`<div class="panel-title"><h3>إدارة قائمة الأدعية والأذكار</h3><button class="btn small" onclick="toggleDuaManager()">إغلاق</button></div>
+ <p class="muted" style="margin-top:0">عدّل العنوان أو النص أو المصدر أو القسم، أو أضف دعاءً جديدًا. تعديل النص لا يمسّ ما سجّلته للطلاب.</p>
+ ${duaItems().map((i,k)=>`<div class="card" style="margin-bottom:8px;padding:12px">
+   <div class="grid4">
+     <div><label>العنوان</label><input value="${esc(i.title)}" onchange="duaEdit(${k},'title',this.value)"></div>
+     <div><label>القسم</label><select onchange="duaEdit(${k},'cat',this.value)">${DUA_CATS.map((c,ci)=>`<option value="${ci}" ${ci===i.cat?"selected":""}>${esc(c)}</option>`).join("")}</select></div>
+     <div><label>المصدر</label><input value="${esc(i.source)}" onchange="duaEdit(${k},'source',this.value)"></div>
+     <div style="display:flex;align-items:end;gap:6px"><button class="btn small" onclick="duaMove(${k},-1)">↑</button><button class="btn small" onclick="duaMove(${k},1)">↓</button><button class="btn small danger" onclick="duaRemove(${k})">حذف</button></div>
+   </div>
+   <div style="margin-top:8px"><label>النص</label><textarea style="min-height:56px" onchange="duaEdit(${k},'text',this.value)">${esc(i.text)}</textarea></div>
+ </div>`).join("")}
+ <div class="toolbar" style="margin-top:10px"><button class="btn primary" onclick="duaAdd()">+ إضافة دعاء</button><button class="btn" onclick="duaRestore()">↺ إضافة ما حُذف من القائمة الأصلية</button></div>`;
+}
+function duaSave(){data.adhkar.u=Date.now();saveData();renderDua()}
+function duaEdit(k,f,v){const i=duaItems()[k];if(!i)return;i[f]=f==="cat"?+v:v.trim();duaSave()}
+function duaMove(k,d){const a=duaItems();if(k+d<0||k+d>=a.length)return;[a[k],a[k+d]]=[a[k+d],a[k]];duaSave()}
+function duaRemove(k){const a=duaItems();if(!confirm(`حذف «${a[k].title}» من القائمة؟ ستختفي حالته من سجل الطلاب.`))return;a.splice(k,1);duaSave()}
+function duaAdd(){const c=duaCat.value===""?0:+duaCat.value;duaItems().push({id:"u"+uid(),cat:c,title:"دعاء جديد",text:"",source:""});duaSave()}
+function duaRestore(){
+ const have=new Set(duaItems().map(i=>i.id)),miss=BUILTIN_ADHKAR.filter(i=>!have.has(i.id));
+ if(!miss.length){toast("كل أدعية القائمة الأصلية موجودة");return}
+ duaItems().push(...clone(miss));duaSave();toast("أُضيف "+miss.length+" من القائمة الأصلية");
+}
+function duaProfileHtml(id){
+ const x=duaStats(id),it=getDp(id).items;
+ const done=duaItems().filter(i=>["done","review"].includes(it[i.id]?.st)).map(i=>esc(i.title)+(it[i.id].st==="review"?"*":""));
+ const learning=duaItems().filter(i=>it[i.id]?.st==="learning").map(i=>esc(i.title));
+ return `<div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px">
+  <div class="panel-title"><h3>الأدعية والأذكار</h3><span class="badge green">${x.done} من ${x.total}</span></div>
+  <div class="progress"><span style="width:${x.pct}%"></span></div>
+  ${done.length?`<p style="line-height:2;margin:10px 0 0"><b>المحفوظ:</b> ${done.join("، ")}${x.review?' <small class="muted">(* يحتاج مراجعة)</small>':""}</p>`:`<p class="muted">لم يُسجَّل حفظ بعد.</p>`}
+  ${learning.length?`<p style="line-height:2;margin:4px 0 0"><b>يحفظ الآن:</b> ${learning.join("، ")}</p>`:""}
+ </div>`;
+}
+function exportDuaCSV(){
+ const items=duaItems();
+ const rows=[["م","اسم الطالب","المحفوظ","المجموع",...items.map(i=>i.title)],...data.students.map((s,n)=>{const it=getDp(s.id).items,x=duaStats(s.id);return [n+1,s.name,x.done,x.total,...items.map(i=>DUA_LABEL[it[i.id]?.st||""])]})];
+ downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8","الأدعية_"+today()+".csv");
+}
+
+/* ================= المواد الشرعية: الفقه والتوحيد وما يُضاف =================
+   data.subjects = {u, list:[{id,name,book,max,lessons:[{id,title}]}]}
+   data.subjectProgress[studentId] = {lessonId:{done:date|"", score:number|null, u}} */
+const BUILTIN_SUBJECTS=[
+ {id:"fiqh",name:"الفقه",book:"",max:10,lessons:["الطهارة وأنواع المياه","النجاسات وكيفية إزالتها","آداب قضاء الحاجة","الوضوء: فروضه وسننه","نواقض الوضوء","الغسل","التيمم","المسح على الخفين","شروط الصلاة","أركان الصلاة","واجبات الصلاة وسننها","مبطلات الصلاة","سجود السهو","صلاة الجماعة والجمعة","الصيام","الزكاة","الحج والعمرة"]},
+ {id:"tawheed",name:"التوحيد",book:"",max:10,lessons:["أركان الإسلام","أركان الإيمان","الإحسان","معنى لا إله إلا الله","شروط لا إله إلا الله","معنى شهادة أن محمدًا رسول الله","أنواع التوحيد","الإيمان بالله","الإيمان بالملائكة","الإيمان بالكتب","الإيمان بالرسل","الإيمان باليوم الآخر","الإيمان بالقدر","الشرك وأنواعه","الأصول الثلاثة: معرفة الرب والدين والنبي"]}
+];
+let subjectSel="",subjectMode="done",subjectManagerOpen=false;
+
+function builtinSubjects(){return BUILTIN_SUBJECTS.map(s=>({id:s.id,name:s.name,book:s.book,max:s.max,lessons:s.lessons.map((t,i)=>({id:`${s.id}${i+1}`,title:t}))}))}
+function normalizeSubjects(x){
+ if(x&&typeof x==="object"&&Array.isArray(x.list)&&(+x.u||x.list.length))
+   return {u:+x.u||0,list:x.list.filter(s=>s&&s.id).map(s=>({id:String(s.id),name:String(s.name||"مادة"),book:String(s.book||""),max:Math.max(1,+s.max||10),lessons:Array.isArray(s.lessons)?s.lessons.filter(l=>l&&l.id).map(l=>({id:String(l.id),title:String(l.title||"")})):[]}))};
+ return {u:0,list:builtinSubjects()};
+}
+function subjById(id){return data.subjects.list.find(s=>s.id===id)||null}
+function curSubject(){let s=subjById(subjectSel);if(!s){s=data.subjects.list[0]||null;subjectSel=s?s.id:""}return s}
+function sp(sid){let p=data.subjectProgress[sid];if(!p)p=data.subjectProgress[sid]={};return p}
+function getSp(sid){return data.subjectProgress[sid]||{}}
+function subjStats(sid,subj){
+ const p=getSp(sid),n=subj.lessons.length;let done=0,sum=0,cnt=0,last=null;
+ subj.lessons.forEach(l=>{const r=p[l.id];if(!r)return;if(r.done){done++;last=l}if(r.score!==null&&r.score!==undefined&&r.score!==""){sum+=+r.score;cnt++}});
+ return {done,total:n,pct:n?Math.round(done/n*100):0,avg:cnt?Math.round(sum/cnt*10)/10:null,avgPct:cnt?Math.round(sum/cnt/subj.max*100):null,last};
+}
+function mergeSubjectProgress(a,b){
+ a=a||{};b=b||{};const out={};
+ for(const id of new Set([...Object.keys(a),...Object.keys(b)])){const x=a[id],y=b[id];out[id]=clone(!y||(x&&stamp(x)>=stamp(y))?x:y)}
+ return out;
+}
+function setLessonRec(sid,lid,patch){const p=sp(sid);p[lid]=Object.assign({done:"",score:null},p[lid]||{},patch,{u:Date.now()})}
+
+/* ---- الصفحة ---- */
+function renderSubjects(){
+ if(!document.getElementById("subjectTabs"))return;
+ const s=curSubject();
+ subjectTabs.innerHTML=data.subjects.list.map(x=>`<button class="btn ${x.id===subjectSel?"primary":""}" onclick="subjectSel='${x.id}';renderSubjects()">${esc(x.name)}</button>`).join("")+`<button class="btn" onclick="addSubject()">+ مادة جديدة</button>`;
+ const old=subjStage.value;
+ subjStage.innerHTML=`<option value="">كل المراحل</option>`+visibleStages().map(x=>`<option value="${x.id}">${esc(x.label)}</option>`).join("");
+ subjStage.value=old;
+ document.querySelectorAll("#subjModeBtns button").forEach(b=>b.classList.toggle("primary",b.dataset.mode===subjectMode));
+ subjBookLine.textContent=s?(s.book?"الكتاب: "+s.book:""):"";
+ renderSubjectGrid();
+ subjectManager.style.display=subjectManagerOpen&&s?"":"none";if(subjectManagerOpen&&s)renderSubjectManager();
+}
+function setSubjectMode(m){subjectMode=m;renderSubjects()}
+function renderSubjectGrid(){
+ const s=curSubject();if(!s){subjectGrid.innerHTML="<div class='empty'>لا توجد مواد. أضف مادة.</div>";return}
+ if(!s.lessons.length){subjectGrid.innerHTML=`<div class="empty">لا توجد دروس في «${esc(s.name)}» بعد.<br><button class="btn primary" style="margin-top:10px" onclick="subjectManagerOpen=true;renderSubjects()">إضافة الدروس</button></div>`;return}
+ const stage=subjStage.value,q=(subjSearch.value||"").trim().toLowerCase();
+ const students=data.students.filter(x=>(!stage||getProg(x.id).partId===stage)&&(!q||x.name.toLowerCase().includes(q)));
+ const heads=s.lessons.map((l,i)=>`<th class="les-head dua-head" title="${esc(l.title)}${subjectMode==="done"?" — اضغط لتسجيله لكل الطلاب":""}" ${subjectMode==="done"?`onclick="toggleSubjectLessonAll('${l.id}')"`:""}><small>${i+1}</small><br>${esc(l.title)}</th>`).join("");
+ const body=students.map((st,n)=>{
+   const p=getSp(st.id),x=subjStats(st.id,s);
+   const cells=s.lessons.map(l=>{const r=p[l.id]||{};
+     if(subjectMode==="score")return `<td><input class="score-in" type="number" min="0" max="${s.max}" step="0.5" value="${r.score??""}" onchange="setSubjectScore('${st.id}','${l.id}',this.value)" title="${esc(l.title)}"></td>`;
+     return `<td><button class="les ${r.done?"done":""}" title="${esc(l.title)}${r.done?" (أُنجز "+r.done+")":""}" onclick="toggleSubjectLesson('${st.id}','${l.id}')">${r.done?"✓":"·"}</button></td>`}).join("");
+   return `<tr><td>${n+1}</td><td class="name">${esc(st.name)}</td><td><b>${x.done}</b>/${x.total}</td><td>${x.avg===null?"—":`${x.avg} <small class="muted">من ${s.max}</small>`}</td>${cells}</tr>`}).join("");
+ subjectGrid.innerHTML=`<table><thead><tr><th>#</th><th>اسم الطالب</th><th>الدروس</th><th>معدل الدرجات</th>${heads}</tr></thead><tbody>${body||`<tr><td colspan="${s.lessons.length+4}" class="empty">لا يوجد طلاب.</td></tr>`}</tbody></table>`;
+}
+function toggleSubjectLesson(sid,lid){const r=getSp(sid)[lid];setLessonRec(sid,lid,{done:r&&r.done?"":today()});touch();renderSubjectGrid()}
+function toggleSubjectLessonAll(lid){
+ const stage=subjStage.value,arr=data.students.filter(x=>!stage||getProg(x.id).partId===stage);if(!arr.length)return;
+ const all=arr.every(x=>getSp(x.id)[lid]?.done);
+ if(all&&!confirm("إلغاء تسجيل هذا الدرس لكل الطلاب المعروضين؟"))return;
+ arr.forEach(x=>{if(all)setLessonRec(x.id,lid,{done:""});else if(!getSp(x.id)[lid]?.done)setLessonRec(x.id,lid,{done:today()})});
+ touch();renderSubjectGrid();toast(all?"أُلغي تسجيل الدرس":"سُجّل الدرس لـ "+arr.length+" طالب");
+}
+function setSubjectScore(sid,lid,v){
+ const s=curSubject();let val=v===""?null:Math.max(0,Math.min(s.max,+v));
+ if(val!==null&&isNaN(val))val=null;
+ const patch={score:val};if(val!==null&&!getSp(sid)[lid]?.done)patch.done=today();
+ setLessonRec(sid,lid,patch);touch();
+ const row=[...subjectGrid.querySelectorAll("tbody tr")].find(tr=>tr.querySelector(`input[onchange*="'${sid}'"]`));
+ if(row){const x=subjStats(sid,s);row.children[2].innerHTML=`<b>${x.done}</b>/${x.total}`;row.children[3].innerHTML=x.avg===null?"—":`${x.avg} <small class="muted">من ${s.max}</small>`}
+}
+
+/* ---- إدارة المادة ---- */
+function toggleSubjectManager(){subjectManagerOpen=!subjectManagerOpen;renderSubjects();if(subjectManagerOpen)subjectManager.scrollIntoView({behavior:"smooth",block:"start"})}
+function renderSubjectManager(){
+ const s=curSubject();
+ subjectManager.innerHTML=`<div class="panel-title"><h3>إعداد مادة «${esc(s.name)}»</h3><button class="btn small" onclick="toggleSubjectManager()">إغلاق</button></div>
+ <div class="grid3">
+  <div><label>اسم المادة</label><input value="${esc(s.name)}" onchange="subjEdit('name',this.value)"></div>
+  <div><label>الكتاب أو المتن المقرر</label><input value="${esc(s.book)}" placeholder="مثل: الفقه الميسر" onchange="subjEdit('book',this.value)"></div>
+  <div><label>الدرجة العظمى للدرس</label><input type="number" min="1" max="100" value="${s.max}" onchange="subjEdit('max',this.value)"></div>
+ </div>
+ <h4 style="margin:16px 0 8px">الدروس (${s.lessons.length})</h4>
+ ${s.lessons.map((l,i)=>`<div class="unit-row" style="grid-template-columns:40px 1fr auto"><b>${i+1}</b><input value="${esc(l.title)}" onchange="subjLessonEdit(${i},this.value)"><div style="white-space:nowrap"><button class="btn small" onclick="subjLessonMove(${i},-1)">↑</button> <button class="btn small" onclick="subjLessonMove(${i},1)">↓</button> <button class="btn small danger" onclick="subjLessonRemove(${i})">×</button></div></div>`).join("")||"<div class='empty'>لا توجد دروس.</div>"}
+ <div style="margin-top:12px"><label>إضافة دروس دفعة واحدة (كل سطر درس)</label><textarea id="subjBulk" placeholder="الدرس الأول&#10;الدرس الثاني"></textarea></div>
+ <div class="toolbar" style="margin-top:8px"><button class="btn primary" onclick="subjLessonsAdd()">+ إضافة الدروس</button>
+  ${BUILTIN_SUBJECTS.some(b=>b.id===s.id)?`<button class="btn" onclick="subjRestore()">↺ استعادة الدروس الأصلية المحذوفة</button>`:""}
+  <button class="btn danger" onclick="removeSubject()">حذف المادة</button></div>`;
+}
+function subjSave(){data.subjects.u=Date.now();saveData();renderSubjects()}
+function subjEdit(f,v){const s=curSubject();if(f==="max")s.max=Math.max(1,Math.min(100,+v||10));else if(f==="name")s.name=v.trim()||s.name;else s.book=v.trim();subjSave()}
+function subjLessonEdit(i,v){const l=curSubject().lessons[i];if(l&&v.trim()){l.title=v.trim();subjSave()}}
+function subjLessonMove(i,d){const a=curSubject().lessons;if(i+d<0||i+d>=a.length)return;[a[i],a[i+d]]=[a[i+d],a[i]];subjSave()}
+function subjLessonRemove(i){const a=curSubject().lessons;if(!confirm(`حذف درس «${a[i].title}»؟ ستختفي درجاته من سجل الطلاب.`))return;a.splice(i,1);subjSave()}
+function subjLessonsAdd(){
+ const lines=(subjBulk.value||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ if(!lines.length){toast("اكتب درسًا واحدًا على الأقل");return}
+ const s=curSubject();lines.forEach(t=>s.lessons.push({id:s.id+"_"+uid(),title:t}));subjSave();toast("أُضيف "+lines.length+" درس");
+}
+function subjRestore(){
+ const s=curSubject(),b=builtinSubjects().find(x=>x.id===s.id);if(!b)return;
+ const have=new Set(s.lessons.map(l=>l.id)),miss=b.lessons.filter(l=>!have.has(l.id));
+ if(!miss.length){toast("كل الدروس الأصلية موجودة");return}
+ s.lessons.push(...miss);subjSave();toast("أُعيد "+miss.length+" درس");
+}
+function addSubject(){
+ const name=prompt("اسم المادة الجديدة (مثل: السيرة النبوية، الحديث، الآداب):");if(!name||!name.trim())return;
+ const id="s"+uid();data.subjects.list.push({id,name:name.trim(),book:"",max:10,lessons:[]});
+ subjectSel=id;subjectManagerOpen=true;subjSave();
+}
+function removeSubject(){
+ const s=curSubject();if(!confirm(`حذف مادة «${s.name}» بكل دروسها؟ ستختفي درجاتها من سجل الطلاب.`))return;
+ data.subjects.list=data.subjects.list.filter(x=>x.id!==s.id);subjectSel="";subjectManagerOpen=false;subjSave();
+}
+function subjectsProfileHtml(id){
+ const rows=data.subjects.list.filter(s=>s.lessons.length).map(s=>{const x=subjStats(id,s);
+   return `<tr><td class="name">${esc(s.name)}${s.book?` <small class="muted">(${esc(s.book)})</small>`:""}</td><td>${x.done} / ${x.total}</td><td><div class="progress" style="width:90px;margin:auto"><span style="width:${x.pct}%"></span></div></td><td>${x.avg===null?"—":x.avg+" من "+s.max}</td><td style="white-space:normal">${x.last?esc(x.last.title):"—"}</td></tr>`}).join("");
+ if(!rows)return "";
+ return `<div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px">
+  <div class="panel-title"><h3>المواد الشرعية</h3></div>
+  <div class="table-wrap"><table style="min-width:0"><thead><tr><th>المادة</th><th>الدروس المنجزة</th><th>الإنجاز</th><th>معدل الدرجات</th><th>آخر درس منجز</th></tr></thead><tbody>${rows}</tbody></table></div>
+ </div>`;
+}
+function exportSubjectCSV(){
+ const s=curSubject();if(!s)return;
+ const rows=[["م","اسم الطالب","الدروس المنجزة","المعدل",...s.lessons.map(l=>l.title)],...data.students.map((st,n)=>{const p=getSp(st.id),x=subjStats(st.id,s);return [n+1,st.name,x.done+"/"+x.total,x.avg??"",...s.lessons.map(l=>{const r=p[l.id];return r?(r.score??(r.done?"✓":"")):""})]})];
+ downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8",s.name+"_"+today()+".csv");
+}
+
+/* ================= إضافة عدة طلاب دفعة واحدة ================= */
+function toggleBulkAdd(open){
+ const el=document.getElementById("bulkAddPanel");if(!el)return;
+ const show=open===undefined?el.style.display==="none":open;
+ el.style.display=show?"":"none";
+ if(show){
+   bulkStage.innerHTML=stageOptions(window.__lastStage||"L1P1");
+   bulkGroup.innerHTML=data.settings.grades.map(g=>`<option>${esc(g)}</option>`).join("");bulkGroup.value=data.settings.defaultGrade;
+   el.scrollIntoView({behavior:"smooth",block:"start"});setTimeout(()=>bulkNames.focus(),200);
+ }
+}
+function parseBulkLine(line){
+ const parts=line.split(/\t|،|,|;|؛/).map(x=>x.trim()).filter(Boolean);
+ const name=parts[0]||"",phone=(parts.slice(1).find(p=>/[\d+]{6,}/.test(p.replace(/\s/g,"")))||"").replace(/\s/g,"");
+ const country=parts.slice(1).find(p=>!/[\d+]{6,}/.test(p.replace(/\s/g,"")))||"";
+ return {name,phone,country};
+}
+function bulkAddStudents(){
+ const lines=(bulkNames.value||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+ if(!lines.length){toast("اكتب اسم طالب واحد على الأقل");return}
+ const existing=new Set(data.students.map(s=>s.name.trim()));
+ let added=0,skipped=0;
+ lines.forEach(line=>{
+   const p=parseBulkLine(line);if(!p.name)return;
+   if(existing.has(p.name)){skipped++;return}
+   const id=uid();
+   data.students.push({id,name:p.name,grade:bulkGroup.value,section:"أ",number:"",phone:p.phone,notes:p.country,u:Date.now()});
+   existing.add(p.name);
+   if(bulkStage.value)setStudentStage(id,bulkStage.value,"تسجيل الطالب");
+   added++;
+ });
+ window.__lastStage=bulkStage.value;
+ saveData({snapshot:true});bulkNames.value="";toggleBulkAdd(false);renderAll();
+ toast(`أُضيف ${added} طالب`+(skipped?`، وتُرك ${skipped} لأن أسماءهم موجودة`:""));
+}
+
+/* ================= حضور اليوم السريع ================= */
+let quickDate="";
+function dayKey(dateStr){const [y,m,d]=dateStr.split("-").map(Number);return {k:y+"-"+String(m).padStart(2,"0"),day:d}}
+function attAt(dateStr,sid){const {k,day}=dayKey(dateStr);return data.records[k]?.[sid]?.days?.[day]||""}
+function setAttAt(dateStr,sid,v){
+ const {k,day}=dayKey(dateStr);
+ data.records[k]??={};data.records[k][sid]??={days:{},notes:"",homework:"",participation:"",behavior:"",grade:""};
+ const r=data.records[k][sid];r.days??={};r.days[day]=v;r.u=Date.now();
+}
+function renderQuickAttendance(){
+ const el=document.getElementById("quickAtt");if(!el)return;
+ if(!quickDate)quickDate=today();
+ const g=document.getElementById("quickGroup")?.value||"";
+ const arr=data.students.filter(s=>!g||s.grade===g);
+ const c={"✓":0,"غ":0,"ت":0,"ع":0,"":0};arr.forEach(s=>c[attAt(quickDate,s.id)]++);
+ const groups=`<option value="">كل المجموعات</option>`+data.settings.grades.map(x=>`<option ${x===g?"selected":""}>${esc(x)}</option>`).join("");
+ const btn=(s,v,lbl,cls)=>{const cur=attAt(quickDate,s.id)===v;return `<button class="att ${cur?cls:""}" style="min-width:56px" onclick="setQuickAtt('${s.id}','${v}')">${v} ${lbl}</button>`};
+ el.innerHTML=`<div class="panel-title"><h3>حضور اليوم</h3><span class="badge blue">${["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"][new Date(quickDate+"T12:00:00").getDay()]}</span></div>
+  <div class="toolbar" style="margin-bottom:8px">
+   <div><label>التاريخ</label><input type="date" value="${quickDate}" onchange="quickDate=this.value||today();renderQuickAttendance()"></div>
+   <div><label>المجموعة</label><select id="quickGroup" onchange="renderQuickAttendance()">${groups}</select></div>
+   <button class="btn success" onclick="quickAllPresent()">✓ الباقون حاضرون</button>
+  </div>
+  <div class="legend" style="margin-bottom:8px"><span class="badge green">حاضر ${c["✓"]}</span><span class="badge red">غائب ${c["غ"]}</span><span class="badge yellow">متأخر ${c["ت"]}</span><span class="badge blue">استئذان ${c["ع"]}</span><span class="badge">لم يُسجَّل ${c[""]}</span></div>
+  ${arr.length?arr.map((s,i)=>`<div class="snapshot" style="flex-wrap:wrap"><b>${i+1}. ${esc(s.name)}</b><div class="actions">${btn(s,"✓","حاضر","present")}${btn(s,"غ","غائب","absent")}${btn(s,"ت","متأخر","late")}${btn(s,"ع","استئذان","leave")}</div></div>`).join(""):`<div class="empty">لا يوجد طلاب. <button class="btn small primary" onclick="goPage('students');toggleBulkAdd(true)">إضافة الطلاب</button></div>`}`;
+}
+function setQuickAtt(sid,v){
+ setAttAt(quickDate,sid,attAt(quickDate,sid)===v?"":v);
+ touch();renderQuickAttendance();renderAttendance();updateDashboard();
+}
+function quickAllPresent(){
+ const g=document.getElementById("quickGroup")?.value||"";let n=0;
+ data.students.filter(s=>!g||s.grade===g).forEach(s=>{if(!attAt(quickDate,s.id)){setAttAt(quickDate,s.id,"✓");n++}});
+ if(!n){toast("كل الطلاب مسجّلون");return}
+ touch();renderQuickAttendance();renderAttendance();updateDashboard();toast("سُجّل "+n+" طالب حاضرين");
+}
+
+/* ================= الاختبارات والدرجات =================
+   data.exams = {u, pass, list:[{id,partId,title,max,date}]}
+   data.examScores[studentId] = {examId:{score,u}} */
+let examStageSel="",examManagerOpen=false;
+function buildDefaultExams(){
+ const list=[];
+ [["L1P1",1,"الاختبار النصفي للمستوى الأول"],["L1P2",9,"الاختبار النهائي للمستوى الأول"],["L2P1",1,"الاختبار النصفي للمستوى الثاني"],["L2P2",9,"الاختبار النهائي للمستوى الثاني"]].forEach(([p,s,fin])=>{
+   for(let k=0;k<4;k++){const a=s+k*2;list.push({id:`${p}-q${k+1}`,partId:p,title:`اختبار الوحدتين ${a} و${a+1}`,max:100,date:""})}
+   list.push({id:`${p}-final`,partId:p,title:fin,max:100,date:""});
+ });
+ return list;
+}
+function normalizeExams(x){
+ if(x&&typeof x==="object"&&Array.isArray(x.list)&&(+x.u||x.list.length))
+   return {u:+x.u||0,pass:Math.max(1,Math.min(100,+x.pass||60)),list:x.list.filter(e=>e&&e.id).map(e=>({id:String(e.id),partId:String(e.partId||""),title:String(e.title||"اختبار"),max:Math.max(1,+e.max||100),date:String(e.date||"")}))};
+ return {u:0,pass:60,list:buildDefaultExams()};
+}
+function examsOf(partId){return data.exams.list.filter(e=>e.partId===partId)}
+function es(sid){let p=data.examScores[sid];if(!p)p=data.examScores[sid]={};return p}
+function getEs(sid){return data.examScores[sid]||{}}
+function examAvg(sid,partId){
+ const sc=getEs(sid);let sum=0,n=0;
+ examsOf(partId).forEach(e=>{const r=sc[e.id];if(r&&r.score!==null&&r.score!==undefined&&r.score!==""){sum+=r.score/e.max*100;n++}});
+ return n?Math.round(sum/n):null;
+}
+function mergeExamScores(a,b){a=a||{};b=b||{};const out={};for(const id of new Set([...Object.keys(a),...Object.keys(b)])){const x=a[id],y=b[id];out[id]=clone(!y||(x&&stamp(x)>=stamp(y))?x:y)}return out}
+function renderExams(){
+ if(!document.getElementById("examGrid"))return;
+ const stages=visibleStages();
+ if(!examStageSel||!stages.some(s=>s.id===examStageSel)){
+   const c={};data.students.forEach(s=>{const id=getProg(s.id).partId;if(id)c[id]=(c[id]||0)+1});
+   examStageSel=Object.keys(c).filter(id=>stages.some(s=>s.id===id)).sort((a,b)=>c[b]-c[a])[0]||stages[0]?.id||"L1P1";
+ }
+ examStage.innerHTML=stages.map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join("");examStage.value=examStageSel;
+ examPass.value=data.exams.pass;
+ renderExamGrid();
+ examManager.style.display=examManagerOpen?"":"none";if(examManagerOpen)renderExamManager();
+}
+function renderExamGrid(){
+ const ex=examsOf(examStageSel),pass=data.exams.pass;
+ if(!ex.length){examGrid.innerHTML=`<div class="empty">لا توجد اختبارات لهذه المرحلة. <button class="btn small primary" onclick="examManagerOpen=true;renderExams()">إضافة اختبار</button></div>`;return}
+ const students=data.students.filter(s=>getProg(s.id).partId===examStageSel||ex.some(e=>getEs(s.id)[e.id]));
+ const heads=ex.map(e=>`<th class="dua-head" title="${esc(e.title)}">${esc(e.title)}<br><small>من ${e.max}${e.date?" — "+esc(e.date):""}</small></th>`).join("");
+ const body=students.map((s,n)=>{const sc=getEs(s.id),avg=examAvg(s.id,examStageSel);
+   return `<tr><td>${n+1}</td><td class="name">${esc(s.name)}</td>${ex.map(e=>{const v=sc[e.id]?.score;const bad=v!==null&&v!==undefined&&v/e.max*100<pass;return `<td><input class="score-in" type="number" min="0" max="${e.max}" step="0.5" value="${v??""}" style="${bad?"border-color:var(--danger);color:var(--danger)":""}" onchange="setExamScore('${s.id}','${e.id}',this.value)"></td>`}).join("")}<td>${avg===null?"—":`<span class="badge ${avg>=pass?"green":"red"}">${avg}%</span>`}</td></tr>`}).join("");
+ examGrid.innerHTML=`<table><thead><tr><th>#</th><th>اسم الطالب</th>${heads}<th>المعدل</th></tr></thead><tbody>${body||`<tr><td colspan="${ex.length+3}" class="empty">لا يوجد طلاب في هذه المرحلة.</td></tr>`}</tbody></table>`;
+}
+function setExamScore(sid,eid,v){
+ const e=data.exams.list.find(x=>x.id===eid);if(!e)return;
+ let val=v===""?null:Math.max(0,Math.min(e.max,+v));if(val!==null&&isNaN(val))val=null;
+ es(sid)[eid]={score:val,u:Date.now()};touch();renderExamGrid();
+}
+function setExamPass(v){data.exams.pass=Math.max(1,Math.min(100,+v||60));examsSave()}
+function examsSave(){data.exams.u=Date.now();saveData();renderExams()}
+function toggleExamManager(){examManagerOpen=!examManagerOpen;renderExams();if(examManagerOpen)examManager.scrollIntoView({behavior:"smooth",block:"start"})}
+function renderExamManager(){
+ const st=stageById(examStageSel),ex=examsOf(examStageSel);
+ examManager.innerHTML=`<div class="panel-title"><h3>اختبارات ${esc(st?.label||"")}</h3><button class="btn small" onclick="toggleExamManager()">إغلاق</button></div>
+ ${ex.map(e=>`<div class="unit-row" style="grid-template-columns:1fr 90px 150px auto"><input value="${esc(e.title)}" onchange="examEdit('${e.id}','title',this.value)"><input type="number" min="1" value="${e.max}" title="الدرجة العظمى" onchange="examEdit('${e.id}','max',this.value)"><input type="date" value="${esc(e.date)}" title="تاريخ الاختبار" onchange="examEdit('${e.id}','date',this.value)"><button class="btn small danger" onclick="examRemove('${e.id}')">×</button></div>`).join("")||"<div class='empty'>لا توجد اختبارات.</div>"}
+ <div class="toolbar" style="margin-top:10px"><button class="btn primary" onclick="examAdd()">+ إضافة اختبار</button><button class="btn" onclick="examRestore()">↺ إعادة الاختبارات الأصلية المحذوفة</button></div>
+ <p class="muted">العناوين والدرجة العظمى والتاريخ قابلة للتعديل. حذف اختبار يحذف درجاته من سجل الطلاب.</p>`;
+}
+function examEdit(id,f,v){const e=data.exams.list.find(x=>x.id===id);if(!e)return;if(f==="max")e.max=Math.max(1,+v||100);else if(f==="title")e.title=v.trim()||e.title;else e.date=v;examsSave()}
+function examRemove(id){const e=data.exams.list.find(x=>x.id===id);if(!e||!confirm(`حذف «${e.title}»؟`))return;data.exams.list=data.exams.list.filter(x=>x.id!==id);examsSave()}
+function examAdd(){data.exams.list.push({id:"e"+uid(),partId:examStageSel,title:"اختبار جديد",max:100,date:today()});examsSave()}
+function examRestore(){
+ const have=new Set(data.exams.list.map(e=>e.id)),miss=buildDefaultExams().filter(e=>e.partId===examStageSel&&!have.has(e.id));
+ if(!miss.length){toast("كل الاختبارات الأصلية موجودة");return}
+ data.exams.list.push(...miss);examsSave();toast("أُعيد "+miss.length+" اختبار");
+}
+function examsProfileHtml(id){
+ const parts=allStages().filter(s=>getProg(id).partId===s.id||examsOf(s.id).some(e=>getEs(id)[e.id]));
+ const blocks=parts.map(s=>{const ex=examsOf(s.id);if(!ex.length)return "";const sc=getEs(id),avg=examAvg(id,s.id);
+   return `<tr><td class="name">${esc(s.label)}</td><td style="white-space:normal;text-align:right">${ex.map(e=>`${esc(e.title)}: <b>${sc[e.id]?.score??"—"}</b>/${e.max}`).join("، ")}</td><td>${avg===null?"—":avg+"%"}</td></tr>`}).join("");
+ if(!blocks)return "";
+ return `<div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px"><div class="panel-title"><h3>الاختبارات</h3></div>
+  <div class="table-wrap"><table style="min-width:0"><thead><tr><th>المرحلة</th><th>الدرجات</th><th>المعدل</th></tr></thead><tbody>${blocks}</tbody></table></div></div>`;
+}
+function exportExamsCSV(){
+ const ex=examsOf(examStageSel);
+ const rows=[["م","اسم الطالب",...ex.map(e=>e.title+" (من "+e.max+")"),"المعدل %"],...data.students.filter(s=>getProg(s.id).partId===examStageSel||ex.some(e=>getEs(s.id)[e.id])).map((s,n)=>[n+1,s.name,...ex.map(e=>getEs(s.id)[e.id]?.score??""),examAvg(s.id,examStageSel)??""])];
+ downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8","الاختبارات_"+today()+".csv");
+}
+
+/* ================= تقرير الطالب (واتساب / نسخ) ================= */
+function studentReportText(sid){
+ const s=data.students.find(x=>x.id===sid);if(!s)return "";
+ const L=[];
+ L.push("السلام عليكم ورحمة الله وبركاته");
+ L.push(`تقرير الطالب: ${s.name} — ${monthNames[currentMonth]} ${currentYear}`);
+ const x=stageStats(sid);
+ if(x.st)L.push(`• المرحلة: ${x.st.label}${x.total?` (أنجز ${x.done} من ${x.total} درسًا، ${x.pct}%)`:""}${x.next?`، الدرس التالي: ${x.next.unit.name} — ${x.next.name}`:""}`);
+ const a=getStats(sid);
+ L.push(`• الحضور هذا الشهر: حاضر ${a.present}، غائب ${a.absent}، متأخر ${a.late}، استئذان ${a.leave}`);
+ const hw=hwStatsFor(sid,weekDates(today())),hm=hwStatsFor(sid,monthStudyDates(currentYear,currentMonth));
+ if(hm.assigned)L.push(`• الواجبات: حلّ ${hw.solved} من ${hw.assigned} هذا الأسبوع، و${hm.solved} من ${hm.assigned} هذا الشهر`);
+ const q=qStats(sid);
+ L.push(`• القرآن: حفظ ${q.planDone} من ${q.planTotal} سورة من المقرر${q.learning?`، ويحفظ الآن سورة ${surahName(q.learning)}`:""}`);
+ const d=duaStats(sid);L.push(`• الأدعية والأذكار: حفظ ${d.done} من ${d.total}`);
+ data.subjects.list.filter(sb=>sb.lessons.length).forEach(sb=>{const y=subjStats(sid,sb);if(y.done||y.avg!==null)L.push(`• ${sb.name}: ${y.done} من ${y.total} درسًا${y.avg!==null?`، المعدل ${y.avg} من ${sb.max}`:""}`)});
+ if(x.st){const av=examAvg(sid,x.st.id);if(av!==null)L.push(`• معدل الاختبارات: ${av}%`)}
+ const r=data.records[monthKey()]?.[sid];
+ if(r?.grade)L.push(`• التقدير العام: ${r.grade}`);
+ if(r?.notes)L.push(`• ملاحظات المعلم: ${r.notes}`);
+ const sign=[data.settings.teacher,data.settings.school].filter(Boolean).join(" — ");
+ if(sign)L.push("",sign);
+ return L.join("\n");
+}
+function sendReportWhatsApp(sid){
+ const s=data.students.find(x=>x.id===sid);if(!s)return;
+ const ph=String(s.phone||"").replace(/[^\d]/g,"").replace(/^00/,"");
+ if(!ph)toast("لا يوجد رقم هاتف للطالب، فاختر جهة الإرسال في واتساب");
+ window.open("https://wa.me/"+(ph.length>=8?ph:"")+"?text="+encodeURIComponent(studentReportText(sid)),"_blank","noopener");
+}
+function copyReport(sid){
+ const t=studentReportText(sid);
+ (navigator.clipboard?navigator.clipboard.writeText(t):Promise.reject()).then(()=>toast("نُسخ التقرير، الصقه حيث شئت")).catch(()=>prompt("انسخ التقرير:",t));
+}
+
+/* ================= ابدأ هنا ================= */
+function renderGettingStarted(){
+ const el=document.getElementById("gettingStarted");if(!el)return;
+ if(data.settings.hideStart){el.innerHTML="";return}
+ const steps=[
+   {done:!!(data.settings.teacher||data.settings.school),t:"اكتب اسم الجهة واسم المعلم",b:"الإعدادات",a:"goPage('settings')"},
+   {done:typeof driveWanted==="function"&&driveWanted(),t:"اربط Google Drive لحفظ البيانات ونقلها بين أجهزتك",b:"ربط Drive",a:"goPage('settings')"},
+   {done:data.students.length>0,t:"أضف الطلاب (يمكن لصق قائمة الأسماء دفعة واحدة)",b:"إضافة الطلاب",a:"goPage('students');toggleBulkAdd(true)"},
+   {done:data.students.length>0&&data.students.every(s=>getProg(s.id).partId),t:"حدّد مرحلة كل طالب (المستوى والجزء)",b:"تحديد المراحل",a:"progressStageSel='none';goPage('progress')"},
+   {done:Object.keys(data.records).length>0,t:"سجّل حضور اليوم الأول",b:"حضور اليوم",a:"goPage('attendance')"}
+ ];
+ const left=steps.filter(s=>!s.done).length;
+ if(!left){el.innerHTML="";return}
+ el.innerHTML=`<div class="panel" style="border-color:var(--primary2)"><div class="panel-title"><h3>ابدأ هنا: ${steps.length-left} من ${steps.length}</h3><button class="btn small" onclick="data.settings.hideStart=true;data.settings.u=Date.now();saveData();renderGettingStarted()">إخفاء</button></div>
+ ${steps.map((s,i)=>`<div class="snapshot"><span>${s.done?"✅":"⬜"} ${i+1}. ${s.t}</span>${s.done?"":`<button class="btn small primary" onclick="${s.a}">${s.b}</button>`}</div>`).join("")}</div>`;
+}
+
+/* ================= الواجبات اليومية =================
+   خمسة واجبات في الأسبوع، واجب لكل يوم دراسة.
+   data.settings.studyDays = أيام الدراسة (0 الأحد … 6 السبت)، افتراضيًا الأحد إلى الخميس
+   data.hwTitles[date] = {t,u}         عنوان واجب اليوم
+   data.hwStatus[studentId][date] = {st,u}   st: done | late | missing | excused */
+const HW_NEXT={"":"done",done:"late",late:"missing",missing:"excused",excused:""};
+const HW_MARK={"":"·",done:"✓",late:"ت",missing:"✗",excused:"ع"};
+const HW_LABEL={"":"لم يُسجَّل",done:"حلّه",late:"سلّمه متأخرًا",missing:"لم يحلّه",excused:"معذور"};
+const HW_CLASS={"":"",done:"present",late:"late",missing:"absent",excused:"leave"};
+const DAY_NAMES=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
+let hwRef="";
+
+function studyDays(){const d=data.settings.studyDays;return Array.isArray(d)&&d.length?[...d].sort((a,b)=>a-b):[0,1,2,3,4]}
+function isoOf(dt){return dt.toLocaleDateString("en-CA")}
+function dateObj(s){return new Date(s+"T12:00:00")}
+function weekDates(ref){const d=dateObj(ref);d.setDate(d.getDate()-d.getDay());const sd=new Set(studyDays()),out=[];for(let i=0;i<7;i++){const x=new Date(d);x.setDate(d.getDate()+i);if(sd.has(i))out.push(isoOf(x))}return out}
+function hwOf(sid){let h=data.hwStatus[sid];if(!h)h=data.hwStatus[sid]={};return h}
+function hwGet(sid,date){return data.hwStatus[sid]?.[date]?.st||""}
+function hwSet(sid,date,st){hwOf(sid)[date]={st,u:Date.now()}}
+function hwTitle(date){return data.hwTitles[date]?.t||""}
+// اليوم «مُسنَد فيه واجب» إذا كُتب عنوانه أو سُجّل لأي طالب فيه شيء
+function hwAssigned(date){if(hwTitle(date))return true;for(const s of data.students)if(hwGet(s.id,date))return true;return false}
+function hwStatsFor(sid,dates){
+ let done=0,late=0,missing=0,excused=0,assigned=0;
+ dates.forEach(d=>{if(!hwAssigned(d))return;const st=hwGet(sid,d);if(st==="excused"){excused++;return}assigned++;if(st==="done")done++;else if(st==="late")late++;else if(st==="missing")missing++});
+ return {done,late,missing,excused,assigned,solved:done+late,pct:assigned?Math.round((done+late)/assigned*100):null};
+}
+function monthStudyDates(y,m){const out=[],sd=new Set(studyDays()),last=new Date(y,m+1,0).getDate(),t=today();for(let d=1;d<=last;d++){const s=isoOf(new Date(y,m,d,12));if(s>t)break;if(sd.has(dateObj(s).getDay()))out.push(s)}return out}
+function mergeKeyed(a,b){a=a||{};b=b||{};const out={};for(const k of new Set([...Object.keys(a),...Object.keys(b)])){const x=a[k],y=b[k];out[k]=clone(!y||(x&&stamp(x)>=stamp(y))?x:y)}return out}
+
+/* ---- الصفحة ---- */
+function renderHomework(){
+ const grid=document.getElementById("hwGrid");if(!grid)return;
+ if(!hwRef)hwRef=today();
+ const dates=weekDates(hwRef);
+ hwWeekLabel.textContent=dates.length?`الأسبوع من ${dates[0]} إلى ${dates[dates.length-1]}`:"لا توجد أيام دراسة محددة";
+ const g=hwGroup.value,stg=hwStage.value;
+ hwGroup.innerHTML=`<option value="">كل المجموعات</option>`+data.settings.grades.map(x=>`<option ${x===g?"selected":""}>${esc(x)}</option>`).join("");
+ hwStage.innerHTML=`<option value="">كل المراحل</option>`+visibleStages().map(x=>`<option value="${x.id}" ${x.id===stg?"selected":""}>${esc(x.label)}</option>`).join("");
+ hwDays.innerHTML=DAY_NAMES.map((n,i)=>`<label style="display:inline-flex;gap:4px;align-items:center;margin-inline-end:10px;color:var(--text);font-size:13px"><input type="checkbox" style="width:auto" ${studyDays().includes(i)?"checked":""} onchange="toggleStudyDay(${i},this.checked)">${n}</label>`).join("");
+ const students=data.students.filter(s=>(!g||s.grade===g)&&(!stg||getProg(s.id).partId===stg));
+ const t=today();
+ const heads=dates.map(d=>`<th style="min-width:120px;white-space:normal;${d===t?"background:#0b9aaa":""}"><span class="les-head" style="cursor:pointer" title="اضغط لتسجيل «حلّه» لكل من لم يُسجَّل" onclick="hwAllDone('${d}')">${DAY_NAMES[dateObj(d).getDay()]}<br><small>${d.slice(5)}</small></span><input class="no-print" style="margin-top:6px;font-size:11px;padding:4px" value="${esc(hwTitle(d))}" placeholder="عنوان الواجب" onchange="setHwTitle('${d}',this.value)"><div class="print-only" style="font-size:10px">${esc(hwTitle(d))}</div></th>`).join("");
+ const body=students.map((s,n)=>{const w=hwStatsFor(s.id,dates);
+   return `<tr><td>${n+1}</td><td class="name">${esc(s.name)}</td>${dates.map(d=>{const st=hwGet(s.id,d);return `<td><button class="att ${HW_CLASS[st]}" style="min-width:48px" title="${HW_LABEL[st]}" onclick="cycleHw('${s.id}','${d}')">${HW_MARK[st]}</button></td>`}).join("")}<td><b>${w.solved}</b>/${w.assigned}${w.pct!==null?`<br><small class="${w.pct<60?"tr-down":"muted"}">${w.pct}%</small>`:""}</td></tr>`}).join("");
+ grid.innerHTML=`<table style="min-width:0"><thead><tr><th>#</th><th>اسم الطالب</th>${heads}<th>مجموع الأسبوع</th></tr></thead><tbody>${body||`<tr><td colspan="${dates.length+3}" class="empty">لا يوجد طلاب.</td></tr>`}</tbody></table>`;
+}
+function hwShiftWeek(n){const d=dateObj(hwRef||today());d.setDate(d.getDate()+7*n);hwRef=isoOf(d);renderHomework()}
+function hwThisWeek(){hwRef=today();renderHomework()}
+function cycleHw(sid,date){hwSet(sid,date,HW_NEXT[hwGet(sid,date)]);touch();renderHomework()}
+function hwAllDone(date){
+ const g=hwGroup.value,stg=hwStage.value;let n=0;
+ data.students.filter(s=>(!g||s.grade===g)&&(!stg||getProg(s.id).partId===stg)).forEach(s=>{if(!hwGet(s.id,date)){hwSet(s.id,date,"done");n++}});
+ if(!n){toast("كل الطلاب مسجّلون في هذا اليوم");return}
+ touch();renderHomework();toast("سُجّل «حلّه» لـ "+n+" طالب");
+}
+function setHwTitle(date,v){data.hwTitles[date]={t:v.trim(),u:Date.now()};saveData();renderHomework()}
+function toggleStudyDay(i,on){let d=studyDays().filter(x=>x!==i);if(on)d.push(i);if(!d.length){toast("اختر يومًا واحدًا على الأقل");renderHomework();return}data.settings.studyDays=d.sort((a,b)=>a-b);data.settings.u=Date.now();saveData();renderHomework()}
+function homeworkProfileHtml(id){
+ const m=hwStatsFor(id,monthStudyDates(currentYear,currentMonth)),w=hwStatsFor(id,weekDates(today()));
+ return `<div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px"><div class="panel-title"><h3>الواجبات اليومية</h3></div>
+  <div class="kpi-row"><div class="kpi"><span>هذا الأسبوع</span><b>${w.solved} / ${w.assigned}</b></div><div class="kpi"><span>هذا الشهر</span><b>${m.solved} / ${m.assigned}</b><small class="muted">${m.pct===null?"":m.pct+"%"}</small></div><div class="kpi"><span>متأخر</span><b>${m.late}</b></div><div class="kpi"><span>لم يحلّه</span><b>${m.missing}</b></div><div class="kpi"><span>معذور</span><b>${m.excused}</b></div></div></div>`;
+}
+function homeworkAlertsHtml(){
+ const dates=weekDates(today()).filter(d=>d<=today());
+ return data.students.map(s=>({s,w:hwStatsFor(s.id,dates)})).filter(o=>o.w.missing>=2)
+  .map(o=>`<div class="notice warn" style="margin-bottom:8px">الطالب <b>${esc(o.s.name)}</b> لم يحلّ ${o.w.missing} واجبات هذا الأسبوع.</div>`).join("");
+}
+function exportHomeworkCSV(){
+ const dates=weekDates(hwRef||today());
+ const rows=[["م","اسم الطالب",...dates.map(d=>DAY_NAMES[dateObj(d).getDay()]+" "+d+(hwTitle(d)?" — "+hwTitle(d):"")),"المحلول","المُسنَد"],...data.students.map((s,n)=>{const w=hwStatsFor(s.id,dates);return [n+1,s.name,...dates.map(d=>HW_LABEL[hwGet(s.id,d)]),w.solved,w.assigned]})];
+ downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8","الواجبات_"+(dates[0]||today())+".csv");
+}
+
 const defaultData={
  version:SCHEMA_VERSION,
- settings:{school:"",teacher:"",record:"نظام متابعة الطلاب",grades:["الأول","الثاني","الثالث","الرابع","الخامس","السادس","المتوسط","الثانوي"],defaultGrade:"الأول"},
+ settings:{school:"",teacher:"",record:"نظام متابعة الطلاب",grades:["المجموعة الأولى","المجموعة الثانية","المجموعة الثالثة"],defaultGrade:"المجموعة الأولى",quranPlan:{from:87,to:114,fatiha:false},studyDays:[0,1,2,3,4]},
  students:[],
  records:{},
  levelAssessments:{},
+ curriculum:null,
+ progress:{},
+ quran:{},
+ adhkar:null,
+ duaProgress:{},
+ subjects:null,
+ subjectProgress:{},
+ exams:null,
+ examScores:{},
+ hwTitles:{},
+ hwStatus:{},
+ deleted:{},
  meta:{createdAt:new Date().toISOString(),updatedAt:null}
 };
 let data=loadData(), currentMonth=new Date().getMonth(), currentYear=new Date().getFullYear(), profileTimer=null, placementMetric="total";
@@ -411,15 +1533,100 @@ let data=loadData(), currentMonth=new Date().getMonth(), currentYear=new Date().
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function normalizeData(x){
  const d=clone(defaultData);
- if(!x||typeof x!=="object")return d;
+ if(!x||typeof x!=="object"){d.curriculum=normalizeCurriculum(null);d.adhkar=normalizeAdhkar(null);d.subjects=normalizeSubjects(null);d.exams=normalizeExams(null);return d}
  d.version=SCHEMA_VERSION;
  d.settings=Object.assign(d.settings,x.settings||{});
  d.settings.grades=Array.isArray(d.settings.grades)&&d.settings.grades.length?d.settings.grades:clone(defaultData.settings.grades);
  d.students=Array.isArray(x.students)?x.students:[];
+ // قائمة الصفوف المدرسية القديمة لا تناسب البرنامج: تُستبدل بالمجموعات إن لم يُسجَّل طلاب بعد
+ if(!d.students.length&&JSON.stringify(d.settings.grades)===JSON.stringify(["الأول","الثاني","الثالث","الرابع","الخامس","السادس","المتوسط","الثانوي"])){d.settings.grades=clone(defaultData.settings.grades);d.settings.defaultGrade=d.settings.grades[0]}
  d.records=x.records&&typeof x.records==="object"?x.records:{};
  d.levelAssessments=x.levelAssessments&&typeof x.levelAssessments==="object"?x.levelAssessments:{};
+ d.deleted=x.deleted&&typeof x.deleted==="object"?x.deleted:{};
+ d.curriculum=normalizeCurriculum(x.curriculum);
+ d.progress=x.progress&&typeof x.progress==="object"?x.progress:{};
+ d.quran=x.quran&&typeof x.quran==="object"?x.quran:{};
+ d.adhkar=normalizeAdhkar(x.adhkar);
+ d.duaProgress=x.duaProgress&&typeof x.duaProgress==="object"?x.duaProgress:{};
+ d.subjects=normalizeSubjects(x.subjects);
+ d.subjectProgress=x.subjectProgress&&typeof x.subjectProgress==="object"?x.subjectProgress:{};
+ d.exams=normalizeExams(x.exams);
+ d.examScores=x.examScores&&typeof x.examScores==="object"?x.examScores:{};
+ d.hwTitles=x.hwTitles&&typeof x.hwTitles==="object"?x.hwTitles:{};
+ d.hwStatus=x.hwStatus&&typeof x.hwStatus==="object"?x.hwStatus:{};
  d.meta=Object.assign(d.meta,x.meta||{});
  return d;
+}
+/* ===== دمج نسختين من البيانات دون فقد =====
+   كل عنصر يحمل ختم وقت تعديله (u)، فيُختار الأحدث لكل طالب ولكل سجل شهري،
+   والمحذوفات تُسجَّل في deleted حتى لا تعود بعد الدمج. */
+function stamp(x){return +(x&&x.u)||0}
+function mergeRecord(a,b){
+ if(!a)return clone(b);if(!b)return clone(a);
+ let ta=stamp(a),tb=stamp(b);
+ if(ta>tb)return clone(a);if(tb>ta)return clone(b);
+ let out=clone(a),days=Object.assign({},b.days||{});
+ for(const [d,v] of Object.entries(a.days||{}))if(v||!(d in days))days[d]=v;
+ out.days=days;
+ ["notes","homework","participation","behavior","grade"].forEach(f=>{if(!out[f]&&b[f])out[f]=b[f]});
+ return out;
+}
+function mergeProgress(a,b){
+ if(!a)return clone(b);if(!b)return clone(a);
+ let ta=stamp(a),tb=stamp(b);
+ if(ta>tb)return clone(a);if(tb>ta)return clone(b);
+ let out=clone(a);
+ out.partId=a.partId||b.partId||"";
+ out.done=Object.assign({},b.done||{},a.done||{});
+ const seen=new Set((a.history||[]).map(h=>h.partId+"|"+h.date));
+ out.history=[...(a.history||[]),...(b.history||[]).filter(h=>!seen.has(h.partId+"|"+h.date))].sort((x,y)=>String(x.date).localeCompare(String(y.date)));
+ return out;
+}
+function mergeData(a,b){
+ a=normalizeData(a);b=normalizeData(b);
+ const out=clone(b);
+ const del=Object.assign({},b.deleted);
+ for(const [k,t] of Object.entries(a.deleted))if(!(del[k]>=t))del[k]=t;
+ out.deleted=del;
+ out.settings=stamp(a.settings)>=stamp(b.settings)?clone(a.settings):clone(b.settings);
+ const sm=new Map(b.students.map(s=>[s.id,s]));
+ for(const s of a.students){const o=sm.get(s.id);if(!o||stamp(s)>=stamp(o))sm.set(s.id,s)}
+ out.students=clone([...sm.values()].filter(s=>{const t=del["s:"+s.id];return !(t&&t>=stamp(s))}));
+ out.records={};
+ for(const m of new Set([...Object.keys(a.records),...Object.keys(b.records)])){
+   const ra=a.records[m]||{},rb=b.records[m]||{};out.records[m]={};
+   for(const sid of new Set([...Object.keys(ra),...Object.keys(rb)]))out.records[m][sid]=mergeRecord(ra[sid],rb[sid]);
+ }
+ out.levelAssessments={};
+ for(const sid of new Set([...Object.keys(a.levelAssessments),...Object.keys(b.levelAssessments)])){
+   const em=new Map();
+   (b.levelAssessments[sid]||[]).forEach(e=>em.set(e.id,e));
+   (a.levelAssessments[sid]||[]).forEach(e=>em.set(e.id,e));
+   const list=[...em.values()].filter(e=>!del["a:"+e.id]);
+   list.sort((x,y)=>String(y.date).localeCompare(String(x.date)));
+   if(list.length)out.levelAssessments[sid]=clone(list);
+ }
+ out.curriculum=stamp(a.curriculum)>=stamp(b.curriculum)?clone(a.curriculum):clone(b.curriculum);
+ out.progress={};
+ for(const sid of new Set([...Object.keys(a.progress),...Object.keys(b.progress)]))out.progress[sid]=mergeProgress(a.progress[sid],b.progress[sid]);
+ out.quran={};
+ for(const sid of new Set([...Object.keys(a.quran),...Object.keys(b.quran)]))out.quran[sid]=mergeQuran(a.quran[sid],b.quran[sid],del);
+ out.adhkar=stamp(a.adhkar)>=stamp(b.adhkar)?clone(a.adhkar):clone(b.adhkar);
+ out.duaProgress={};
+ for(const sid of new Set([...Object.keys(a.duaProgress),...Object.keys(b.duaProgress)]))out.duaProgress[sid]=mergeDuaProgress(a.duaProgress[sid],b.duaProgress[sid]);
+ out.subjects=stamp(a.subjects)>=stamp(b.subjects)?clone(a.subjects):clone(b.subjects);
+ out.subjectProgress={};
+ for(const sid of new Set([...Object.keys(a.subjectProgress),...Object.keys(b.subjectProgress)]))out.subjectProgress[sid]=mergeSubjectProgress(a.subjectProgress[sid],b.subjectProgress[sid]);
+ out.exams=stamp(a.exams)>=stamp(b.exams)?clone(a.exams):clone(b.exams);
+ out.examScores={};
+ for(const sid of new Set([...Object.keys(a.examScores),...Object.keys(b.examScores)]))out.examScores[sid]=mergeExamScores(a.examScores[sid],b.examScores[sid]);
+ out.hwTitles=mergeKeyed(a.hwTitles,b.hwTitles);
+ out.hwStatus={};
+ for(const sid of new Set([...Object.keys(a.hwStatus),...Object.keys(b.hwStatus)]))out.hwStatus[sid]=mergeKeyed(a.hwStatus[sid],b.hwStatus[sid]);
+ const ua=a.meta.updatedAt||"",ub=b.meta.updatedAt||"";
+ out.meta.updatedAt=ua>ub?ua:ub||null;
+ if(a.meta.createdAt&&(!b.meta.createdAt||a.meta.createdAt<b.meta.createdAt))out.meta.createdAt=a.meta.createdAt;
+ return out;
 }
 function loadData(){
  try{
@@ -433,12 +1640,21 @@ function loadData(){
      return migrated;
    }
  }catch(e){}
- return clone(defaultData);
+ return normalizeData(null);
 }
+function isQuotaError(e){return e&&(e.name==="QuotaExceededError"||e.code===22||e.code===1014)}
 function saveData({snapshot=false}={}){
  try{
    data.meta.updatedAt=new Date().toISOString();
-   localStorage.setItem(KEY,JSON.stringify(data));
+   let json=JSON.stringify(data);
+   try{localStorage.setItem(KEY,json)}
+   catch(e){
+     if(!isQuotaError(e))throw e;
+     // المساحة امتلأت باللقطات: نُبقي أحدث لقطتين ثم نعيد المحاولة
+     try{localStorage.setItem(SNAP_KEY,JSON.stringify(getSnapshots().slice(0,2)))}catch(_){localStorage.removeItem(SNAP_KEY)}
+     localStorage.setItem(KEY,json);
+   }
+   gLocalRev++;setPending(true);
    setSaveStatus("محفوظ","green");
    updateStorageInfo();
    updateSaveTime();
@@ -449,7 +1665,14 @@ function saveData({snapshot=false}={}){
    alert("تعذر الحفظ في المتصفح. صدّر نسخة JSON فورًا قبل إغلاق الصفحة.");
  }
 }
-function saveNow(){saveData({snapshot:true});toast("تم حفظ البيانات وإنشاء نقطة استرجاع")}
+function saveNow(){
+ flushPendingEdits();saveData({snapshot:true});
+ if(driveWanted()){
+   if(tokenValid()){clearTimeout(gDrivePushTimer);syncNow().then(ok=>toast(ok?"تم الحفظ والرفع إلى Google Drive":"حُفظ على الجهاز، وتعذر الرفع الآن"));return}
+   requestDriveToken(false);toast("حُفظ على الجهاز. أعد الاتصال بجوجل لرفع التعديلات");return;
+ }
+ toast("تم حفظ البيانات وإنشاء نقطة استرجاع");
+}
 function setSaveStatus(t,c="green"){let e=document.getElementById("saveStatus");if(e){e.textContent=t;e.className="badge "+c}}
 function touch(){setSaveStatus("جارٍ الحفظ...","yellow");clearTimeout(window.__st);window.__st=setTimeout(()=>saveData(),250)}
 function toast(t){let e=document.getElementById("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2300)}
@@ -469,18 +1692,24 @@ function monthsInit(){
 function populateGrades(){
  const opts=data.settings.grades.map(g=>`<option>${esc(g)}</option>`).join("");
  ["studentGrade","defaultGrade"].forEach(id=>document.getElementById(id).innerHTML=opts);
- document.getElementById("studentGradeFilter").innerHTML='<option value="">كل الصفوف</option>'+opts;
+ document.getElementById("studentGradeFilter").innerHTML='<option value="">كل المجموعات</option>'+opts;
+ let sf=document.getElementById("studentStageFilter"),sfOld=sf.value;
+ sf.innerHTML='<option value="">كل المراحل</option>'+visibleStages().map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join("")+'<option value="none">بدون مرحلة</option>';
+ sf.value=sfOld;
  document.getElementById("defaultGrade").value=data.settings.defaultGrade;
 }
 function renderStudents(){
- const q=document.getElementById("studentSearch").value.trim().toLowerCase(),g=document.getElementById("studentGradeFilter").value;
- let arr=data.students.filter(s=>(!q||s.name.toLowerCase().includes(q)||String(s.number||"").includes(q))&&(!g||s.grade===g));
- document.getElementById("studentsBody").innerHTML=arr.length?arr.map((s,i)=>`<tr><td>${i+1}</td><td class="name">${esc(s.name)}</td><td>${esc(s.grade)}</td><td>${esc(s.section)}</td><td>${esc(s.number)}</td><td>${esc(s.phone)}</td><td>${esc(s.notes)}</td><td><button class="btn small" onclick="openStudentModal('${s.id}')">تعديل</button> <button class="btn small danger" onclick="deleteStudent('${s.id}')">حذف</button></td></tr>`).join(""):`<tr><td colspan="8" class="empty">لا يوجد طلاب</td></tr>`;
+ const q=document.getElementById("studentSearch").value.trim().toLowerCase(),g=document.getElementById("studentGradeFilter").value,sg=document.getElementById("studentStageFilter").value;
+ let arr=data.students.filter(s=>(!q||s.name.toLowerCase().includes(q)||String(s.number||"").includes(q))&&(!g||s.grade===g)&&(!sg||(sg==="none"?!getProg(s.id).partId:getProg(s.id).partId===sg)));
+ const stCell=s=>{const x=stageStats(s.id);return x.st?esc(x.st.label):"<span class='muted'>—</span>"};
+ const pgCell=s=>{const x=stageStats(s.id);return x.total?`<div style="display:flex;gap:6px;align-items:center;justify-content:center"><div class="progress" style="width:70px"><span style="width:${x.pct}%"></span></div><small>${x.pct}%</small></div>`:"—"};
+ document.getElementById("studentsBody").innerHTML=arr.length?arr.map((s,i)=>`<tr><td>${i+1}</td><td class="name">${esc(s.name)}</td><td>${stCell(s)}</td><td>${pgCell(s)}</td><td>${esc(s.grade)}</td><td>${esc(s.section)}</td><td>${esc(s.number)}</td><td>${esc(s.phone)}</td><td>${esc(s.notes)}</td><td><button class="btn small" onclick="openStudentModal('${s.id}')">تعديل</button> <button class="btn small danger" onclick="deleteStudent('${s.id}')">حذف</button></td></tr>`).join(""):`<tr><td colspan="10" class="empty">لا يوجد طلاب</td></tr>`;
  updateStudentLists();updateDashboard();
 }
 function openStudentModal(id=""){
  document.getElementById("editStudentId").value=id;document.getElementById("modalTitle").textContent=id?"تعديل بيانات الطالب":"إضافة طالب";
  let s=data.students.find(x=>x.id===id)||{name:"",grade:data.settings.defaultGrade,section:"أ",number:"",phone:"",notes:""};
+ studentStage.innerHTML=stageOptions(id?getProg(id).partId:(window.__lastStage||""));
  studentName.value=s.name;studentGrade.value=s.grade;studentSection.value=s.section;studentNumber.value=s.number;studentPhone.value=s.phone;studentNotes.value=s.notes;
  modalBack.classList.add("show");setTimeout(()=>studentName.focus(),50);
 }
@@ -488,14 +1717,16 @@ function closeModal(){modalBack.classList.remove("show")}
 function saveStudent(){
  let name=studentName.value.trim();if(!name){toast("أدخل اسم الطالب");return}
  let id=editStudentId.value;
- let obj={id:id||uid(),name,grade:studentGrade.value,section:studentSection.value.trim(),number:studentNumber.value.trim(),phone:studentPhone.value.trim(),notes:studentNotes.value.trim()};
+ let obj={id:id||uid(),name,grade:studentGrade.value,section:studentSection.value.trim(),number:studentNumber.value.trim(),phone:studentPhone.value.trim(),notes:studentNotes.value.trim(),u:Date.now()};
+ window.__lastStage=studentStage.value;
+ setStudentStage(obj.id,studentStage.value,id?"تعديل البيانات":"تسجيل الطالب");
  if(id){let i=data.students.findIndex(s=>s.id===id);if(i>=0)data.students[i]=obj}else data.students.push(obj);
  saveData({snapshot:true});closeModal();renderAll();toast("تم حفظ الطالب");
 }
 function deleteStudent(id){
  let s=data.students.find(x=>x.id===id);if(!s)return;
  if(confirm("حذف الطالب «"+s.name+"»؟ ستبقى سجلاته القديمة محفوظة في النسخة الاحتياطية فقط.")){
-   data.students=data.students.filter(x=>x.id!==id);saveData({snapshot:true});renderAll();toast("تم حذف الطالب");
+   data.students=data.students.filter(x=>x.id!==id);data.deleted["s:"+id]=Date.now();saveData({snapshot:true});renderAll();toast("تم حذف الطالب");
  }
 }
 function statusCycle(v){return v===""?"✓":v==="✓"?"غ":v==="غ"?"ت":v==="ت"?"ع":""}
@@ -509,7 +1740,7 @@ function renderAttendance(){
  }).join("");
  attendanceTable.innerHTML=`<table><thead><tr><th>#</th><th>اسم الطالب</th>${heads}<th>ح</th><th>غ</th><th>ت</th><th>ع</th></tr></thead><tbody>${body||'<tr><td colspan="40" class="empty">لا يوجد طلاب</td></tr>'}</tbody></table>`;
 }
-function cycle(id,day){let r=rec(id,day),v=r.days[day]||"";r.days[day]=statusCycle(v);touch();renderAttendance();refreshProfileReport();updateDashboard()}
+function cycle(id,day){let r=rec(id,day),v=r.days[day]||"";r.days[day]=statusCycle(v);r.u=Date.now();touch();renderAttendance();refreshProfileReport();updateDashboard()}
 function getStats(id){
  let r=data.records[monthKey()]?.[id];let vals=r?Object.values(r.days||{}):[];
  return {present:vals.filter(x=>x==="✓").length,absent:vals.filter(x=>x==="غ").length,late:vals.filter(x=>x==="ت").length,leave:vals.filter(x=>x==="ع").length}
@@ -527,7 +1758,10 @@ function updateDashboard(){
    let x=getStats(s.id),reason=[];if(x.absent>=3)reason.push(x.absent+" غياب");if(data.records[monthKey()]?.[s.id]?.grade==="يحتاج متابعة")reason.push("التقدير: يحتاج متابعة");
    return `<div class="notice warn" style="margin-bottom:8px">الطالب <b>${esc(s.name)}</b> — ${reason.join("، ")}.</div>`;
  }).join("");
+ alertsHtml+=homeworkAlertsHtml()+quranAlertsHtml();
+ renderGettingStarted();
  document.getElementById("alerts").innerHTML=alertsHtml||"<div class='empty'>لا توجد تنبيهات حاليًا.</div>";
+ renderStageDistribution();
 }
 function updateStudentLists(){
  const html='<option value="">اختر طالبًا</option>'+data.students.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
@@ -558,7 +1792,7 @@ function savePlacement(){
 }
 function deletePlacement(studentId,recId){
  if(!confirm("حذف هذا التقييم؟ لا يمكن التراجع بعد الحذف."))return;
- data.levelAssessments[studentId]=(data.levelAssessments[studentId]||[]).filter(x=>x.id!==recId);
+ data.levelAssessments[studentId]=(data.levelAssessments[studentId]||[]).filter(x=>x.id!==recId);data.deleted["a:"+recId]=Date.now();
  saveData({snapshot:true});refreshProfileReport();toast("تم حذف التقييم");
 }
 
@@ -579,7 +1813,10 @@ function renderProfile(){
 }
 function saveProfileFollowup(){
  let id=document.getElementById("profileStudent")?.value;if(!id)return;let r=rec(id);
- r.homework=pfHomework.value.trim();r.participation=pfParticipation.value.trim();r.behavior=pfBehavior.value.trim();r.notes=pfNotes.value.trim();r.grade=pfGrade.value;
+ clearTimeout(profileTimer);profileTimer=null;
+ let nv={homework:pfHomework.value.trim(),participation:pfParticipation.value.trim(),behavior:pfBehavior.value.trim(),notes:pfNotes.value.trim(),grade:pfGrade.value};
+ if(Object.keys(nv).every(k=>(r[k]||"")===nv[k]))return;
+ Object.assign(r,nv);r.u=Date.now();
  saveData();updateDashboard();refreshProfileReport();
 }
 function scheduleProfileFollowupSave(){clearTimeout(profileTimer);setSaveStatus("جارٍ الحفظ...","yellow");profileTimer=setTimeout(saveProfileFollowup,350)}
@@ -633,6 +1870,12 @@ function refreshProfileReport(){
        <div><label>ملاحظات الشهر</label><div class="card">${esc(r.notes||"—")}</div></div>
      </div>
    </div>
+   ${progressProfileHtml(id)}
+   ${homeworkProfileHtml(id)}
+   ${quranProfileHtml(id)}
+   ${duaProfileHtml(id)}
+   ${subjectsProfileHtml(id)}
+   ${examsProfileHtml(id)}
    <div class="panel" style="box-shadow:none;border:1px solid var(--border);margin-top:15px">
      <div class="panel-title"><h3>تحديد المستوى في اللغة العربية</h3><button class="btn small no-print" onclick="openPlacementModal()">+ تقييم جديد</button></div>
      ${placementHtml}
@@ -649,10 +1892,10 @@ function refreshProfileReport(){
 
 function changeMonth(){currentMonth=+monthSelect.value;currentYear=+yearInput.value||new Date().getFullYear();renderAttendance();renderProfile();updateDashboard()}
 function saveSettings(){
- data.settings.school=schoolName.value.trim();data.settings.teacher=teacherName.value.trim();data.settings.record=recordName.value.trim()||"نظام متابعة الطلاب";data.settings.defaultGrade=defaultGrade.value;
+ data.settings.school=schoolName.value.trim();data.settings.teacher=teacherName.value.trim();data.settings.record=recordName.value.trim()||"نظام متابعة الطلاب";data.settings.defaultGrade=defaultGrade.value;data.settings.u=Date.now();
  saveData({snapshot:true});toast("تم حفظ الإعدادات");renderAll();
 }
-function addGrade(){let x=newGrade.value.trim();if(!x)return;if(!data.settings.grades.includes(x))data.settings.grades.push(x);newGrade.value="";saveData();renderSettings();populateGrades();renderStudents()}
+function addGrade(){let x=newGrade.value.trim();if(!x)return;if(!data.settings.grades.includes(x)){data.settings.grades.push(x);data.settings.u=Date.now()}newGrade.value="";saveData();renderSettings();populateGrades();renderStudents()}
 function renderSettings(){
  schoolName.value=data.settings.school||"";teacherName.value=data.settings.teacher||"";recordName.value=data.settings.record||"";
  gradesList.innerHTML=data.settings.grades.map((g,i)=>`<span class="badge green" style="margin:4px">${esc(g)} ${i>0?`<button class="btn small" onclick="removeGrade(${i})">×</button>`:""}</span>`).join("");
@@ -663,10 +1906,10 @@ function renderSettings(){
 }
 function removeGrade(i){
  let g=data.settings.grades[i];
- if(confirm("حذف الصف «"+g+"» من القوائم؟ سيُنقل الطلاب المسجّلون حاليًا في هذا الصف إلى الصف الافتراضي تلقائيًا.")){
-   data.settings.grades.splice(i,1);
+ if(confirm("حذف المجموعة «"+g+"»؟ سيُنقل طلابها إلى المجموعة الافتراضية تلقائيًا.")){
+   data.settings.grades.splice(i,1);data.settings.u=Date.now();
    if(data.settings.defaultGrade===g)data.settings.defaultGrade=data.settings.grades[0]||"";
-   data.students.forEach(s=>{if(s.grade===g)s.grade=data.settings.defaultGrade||""});
+   data.students.forEach(s=>{if(s.grade===g){s.grade=data.settings.defaultGrade||"";s.u=Date.now()}});
    saveData();populateGrades();renderSettings();renderStudents();
  }
 }
@@ -682,12 +1925,12 @@ function exportBackup(){
 function validateImport(x){return x&&typeof x==="object"&&x.data&&Array.isArray(x.data.students)&&x.data.records&&typeof x.data.records==="object"}
 function importBackup(ev){
  let file=ev.target.files[0];if(!file)return;let rd=new FileReader();
- rd.onload=()=>{try{let x=JSON.parse(rd.result);if(!validateImport(x))throw new Error("invalid");if(confirm("سيتم إنشاء لقطة من بياناتك الحالية ثم استبدالها بالنسخة المستوردة. متابعة؟")){makeSnapshot(false);data=normalizeData(x.data);saveData({snapshot:true});renderAll();toast("تمت استعادة النسخة بنجاح")}}catch(e){alert("الملف غير صالح أو لا يطابق بنية نظام المتابعة.")}finally{ev.target.value=""}};
+ rd.onload=()=>{try{let x=JSON.parse(rd.result);if(!validateImport(x))throw new Error("invalid");if(confirm("سيتم إنشاء لقطة من بياناتك الحالية ثم استبدالها بالنسخة المستوردة. متابعة؟")){makeSnapshot(false);data=normalizeData(x.data);markForceOverwrite();saveData({snapshot:true});renderAll();toast("تمت استعادة النسخة بنجاح")}}catch(e){alert("الملف غير صالح أو لا يطابق بنية نظام المتابعة.")}finally{ev.target.value=""}};
  rd.readAsText(file);
 }
 function csvCell(v){v=String(v??"").replace(/"/g,'""');return `"${v}"`}
 function exportStudentsCSV(){
- let rows=[["م","اسم الطالب","الصف","الشعبة","رقم الطالب","الهاتف","ملاحظات"],...data.students.map((s,i)=>[i+1,s.name,s.grade,s.section,s.number,s.phone,s.notes])];
+ let rows=[["م","اسم الطالب","المرحلة","المجموعة","الشعبة","رقم الطالب","الهاتف","ملاحظات"],...data.students.map((s,i)=>[i+1,s.name,stageStats(s.id).st?.label||"",s.grade,s.section,s.number,s.phone,s.notes])];
  let csv="﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");downloadBlob(csv,"text/csv;charset=utf-8","الطلاب_"+new Date().toISOString().slice(0,10)+".csv");
 }
 function exportAttendanceCSV(){
@@ -698,13 +1941,19 @@ function exportAttendanceCSV(){
 function getSnapshots(){try{return JSON.parse(localStorage.getItem(SNAP_KEY)||"[]")}catch(e){return []}}
 function makeSnapshot(showToast=false){
  try{
-   let list=getSnapshots();list.unshift({id:uid(),at:new Date().toISOString(),data:clone(data)});list=list.slice(0,10);localStorage.setItem(SNAP_KEY,JSON.stringify(list));renderSnapshots();if(showToast)toast("تم إنشاء لقطة استرجاع");
- }catch(e){if(showToast)toast("تعذر إنشاء اللقطة")}
+   let list=getSnapshots();list.unshift({id:uid(),at:new Date().toISOString(),data:clone(data)});list=list.slice(0,10);
+   // إذا امتلأت مساحة المتصفح نحذف الأقدم حتى تتسع، بدل أن يفشل الحفظ كله
+   while(true){
+     try{localStorage.setItem(SNAP_KEY,JSON.stringify(list));break}
+     catch(e){if(!isQuotaError(e)||list.length<=1)throw e;list.pop()}
+   }
+   renderSnapshots();if(showToast)toast("تم إنشاء لقطة استرجاع");
+ }catch(e){if(showToast)toast("تعذر إنشاء اللقطة: مساحة المتصفح ممتلئة")}
 }
 function restoreSnapshot(id){
  let s=getSnapshots().find(x=>x.id===id);if(!s)return;
  if(confirm("استعادة هذه اللقطة واستبدال البيانات الحالية؟ سيتم إنشاء لقطة من وضعك الحالي أولًا احتياطًا.")){
-   makeSnapshot(false);data=normalizeData(s.data);saveData();renderAll();toast("تمت استعادة اللقطة")
+   makeSnapshot(false);data=normalizeData(s.data);markForceOverwrite();saveData();renderAll();toast("تمت استعادة اللقطة")
  }
 }
 function deleteSnapshot(id){let list=getSnapshots().filter(x=>x.id!==id);localStorage.setItem(SNAP_KEY,JSON.stringify(list));renderSnapshots()}
@@ -712,9 +1961,10 @@ function renderSnapshots(){
  let list=getSnapshots();snapshotsList.innerHTML=list.length?list.map(s=>`<div class="snapshot"><div><b>${new Date(s.at).toLocaleString("ar-SA")}</b><div class="muted">${s.data.students?.length||0} طالب</div></div><div><button class="btn small primary" onclick="restoreSnapshot('${s.id}')">استعادة</button> <button class="btn small danger" onclick="deleteSnapshot('${s.id}')">حذف</button></div></div>`).join(""):"<div class='empty'>لا توجد لقطات بعد.</div>";
 }
 function clearAllData(){
- if(confirm("تحذير: سيتم حذف جميع البيانات الأساسية واللقطات المحلية. هل أنت متأكد؟")&&confirm("تأكيد أخير: هل صدّرت نسخة JSON خارجية؟")){
-   localStorage.removeItem(KEY);localStorage.removeItem(OLD_KEY);localStorage.removeItem(SNAP_KEY);
-   if(gDriveConnected&&gDriveFileId){driveApiFetch(`https://www.googleapis.com/drive/v3/files/${gDriveFileId}`,{method:"DELETE"}).catch(()=>{});}
+ if(confirm("تحذير: سيتم حذف جميع البيانات واللقطات من هذا الجهاز، وقطع الاتصال بجوجل درايف. ملف Google Drive لن يُحذف ويبقى نسخة احتياطية يمكنك استرجاعها بإعادة الاتصال. هل أنت متأكد؟")&&confirm("تأكيد أخير: هل صدّرت نسخة JSON خارجية؟")){
+   [KEY,OLD_KEY,SNAP_KEY,GDRIVE_CONNECTED_KEY,GDRIVE_PENDING_KEY,GDRIVE_FORCE_KEY,GDRIVE_FILE_KEY].forEach(lsDel);
+   clearToken();
+   window.__clearing=true;
    location.reload();
  }
 }
@@ -722,191 +1972,319 @@ function updateStorageInfo(){
  let b1=new Blob([localStorage.getItem(KEY)||""]).size,b2=new Blob([localStorage.getItem(SNAP_KEY)||""]).size;
  storageInfo.textContent=`البيانات الأساسية: ${(b1/1024).toFixed(1)} KB — لقطات الاسترجاع: ${(b2/1024).toFixed(1)} KB — آخر حفظ: ${data.meta.updatedAt?new Date(data.meta.updatedAt).toLocaleString("ar-SA"):"لم يتم بعد"}`;
 }
-function updateSaveTime(){sideSaveTime.textContent=data.meta.updatedAt?"آخر حفظ: "+new Date(data.meta.updatedAt).toLocaleString("ar-SA"):"لم يتم الحفظ بعد"}
+function updateSaveTime(){sideSaveTime.textContent=data.meta.updatedAt?"آخر حفظ: "+new Date(data.meta.updatedAt).toLocaleString("ar-SA"):"لم يتم الحفظ بعد";if(typeof driveWanted==="function"&&driveWanted())renderGdriveStatus()}
 function printPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("print-target"));document.getElementById(id).classList.add("print-target");window.print();setTimeout(()=>document.getElementById(id).classList.remove("print-target"),600)}
-function renderAll(){monthsInit();populateGrades();renderStudents();renderAttendance();renderSettings();renderSnapshots();updateDashboard();updateStorageInfo();updateSaveTime();renderProfile()}
+function renderAll(){monthsInit();populateGrades();renderStudents();renderAttendance();renderSettings();renderSnapshots();updateDashboard();updateStorageInfo();updateSaveTime();renderProfile();renderProgress();renderQuran();renderDua();renderSubjects();renderExams();renderQuickAttendance();renderHomework()}
 
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>{
  document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
  document.querySelectorAll(".page").forEach(x=>x.classList.remove("active"));document.getElementById(b.dataset.page).classList.add("active");pageTitle.textContent=b.textContent;
+ if(b.dataset.page==="progress")renderProgress();
+ if(b.dataset.page==="quran")renderQuran();
+ if(b.dataset.page==="dua")renderDua();
+ if(b.dataset.page==="subjects")renderSubjects();
+ if(b.dataset.page==="exams")renderExams();
+ if(b.dataset.page==="homework")renderHomework();
+ if(b.dataset.page==="attendance")renderQuickAttendance();
  if(b.dataset.page==="attendance")renderAttendance();if(b.dataset.page==="profile")renderProfile();if(b.dataset.page==="backup"){renderSnapshots();updateStorageInfo()}if(b.dataset.page==="settings")renderSettings();
 }));
-window.addEventListener("beforeunload",()=>{try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}});
+window.addEventListener("beforeunload",e=>{
+ if(window.__clearing)return;
+ flushPendingEdits();
+ try{localStorage.setItem(KEY,JSON.stringify(data))}catch(_){}
+ // تنبيه فقط إذا كان هناك تعديل لم يصل إلى Drive والاتصال قائم
+ if(driveWanted()&&tokenValid()&&(isPending()||gSyncPromise)){e.preventDefault();e.returnValue=""}
+});
 window.addEventListener("storage",e=>{if(e.key===KEY&&e.newValue){try{data=normalizeData(JSON.parse(e.newValue));renderAll();toast("تم تحديث البيانات من نافذة أخرى")}catch(_){} }});
-document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();saveNow()}if(e.key==="Escape"){closeModal();closePlacementModal()}});
+document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();saveNow()}if(e.key==="Escape"){closeModal();closePlacementModal();closeDuaModal()}});
 
-/* ================= مزامنة Google Drive (مستقلة تمامًا عن Claude) ================= */
+/* ================= مزامنة Google Drive =================
+   المبادئ:
+   1) لا تُستبدل بيانات الجهاز ببيانات Drive إذا كان فيها تعديل لم يُرفع؛ بل تُدمج.
+   2) علامة «تعديلات بانتظار الرفع» محفوظة في المتصفح، فلا تضيع لو أُغلقت الصفحة أو انقطع الاتصال.
+   3) صلاحية جوجل تنتهي كل ساعة تقريبًا؛ عندها يظهر شريط «إعادة الاتصال» بدل التوقف الصامت.
+   4) نسخة يومية مؤرخة في Drive احتياطًا. */
+
+// ضع هنا الـ Client ID مرة واحدة ليُستعمل تلقائيًا في كل أجهزتك (ليس سرًّا ويجوز نشره).
+const DEFAULT_GDRIVE_CLIENT_ID="";
 const GOOGLE_DRIVE_FILENAME="بيانات_نظام_متابعة_الطلاب.json";
 const GDRIVE_CLIENTID_KEY="gdrive_client_id_v1";
 const GDRIVE_CONNECTED_KEY="gdrive_connected_v1";
+const GDRIVE_PENDING_KEY="gdrive_pending_v1";
+const GDRIVE_FORCE_KEY="gdrive_force_v1";
+const GDRIVE_FILE_KEY="gdrive_file_v1";
+const GDRIVE_TOKEN_KEY="gdrive_token_v1";
+const GDRIVE_BACKUP_DAY_KEY="gdrive_backup_day_v1";
 const GDRIVE_SCOPE="https://www.googleapis.com/auth/drive.file";
-let gTokenClient=null, gAccessToken=null, gDriveFileId=null, gDriveConnected=false, gDrivePollTimer=null, gLastKnownModified=null, gDrivePushTimer=null;
+const DRIVE_API="https://www.googleapis.com/drive/v3/files";
+const DRIVE_UPLOAD="https://www.googleapis.com/upload/drive/v3/files";
+let gTokenClient=null,gAccessToken=null,gTokenExp=0,gDriveFileId=null,gLastKnownModified=null;
+let gDrivePollTimer=null,gDrivePushTimer=null,gSyncPromise=null,gSyncAgain=false,gLastSyncAt=null,gLocalRev=0,gDriveMsg="";
 
-function getClientId(){try{return (localStorage.getItem(GDRIVE_CLIENTID_KEY)||"").trim()}catch(e){return ""}}
-function setSyncStatus(t,c="blue"){let e=document.getElementById("syncStatus");if(e){e.textContent=t;e.className="badge "+c;e.style.display="";}}
-function renderGdriveStatus(){
- let badge=document.getElementById("gdriveBadge"),txt=document.getElementById("gdriveStatusText");
- if(!badge)return;
- if(gDriveConnected){badge.textContent="متصل";badge.className="badge green";if(txt)txt.textContent="النظام متصل الآن بـ Google Drive ويُزامن تلقائيًا.";}
- else{badge.textContent="غير متصل";badge.className="badge blue";if(txt)txt.textContent="لم يتم الاتصال بعد. أدخل الـ Client ID واضغط «حفظ واتصال».";}
+function lsGet(k){try{return localStorage.getItem(k)}catch(e){return null}}
+function lsSet(k,v){try{localStorage.setItem(k,v)}catch(e){}}
+function lsDel(k){try{localStorage.removeItem(k)}catch(e){}}
+function getClientId(){return (lsGet(GDRIVE_CLIENTID_KEY)||DEFAULT_GDRIVE_CLIENT_ID||"").trim()}
+function driveWanted(){return lsGet(GDRIVE_CONNECTED_KEY)==="1"&&!!getClientId()}
+function tokenValid(){return !!gAccessToken&&Date.now()<gTokenExp-60000}
+function isPending(){return lsGet(GDRIVE_PENDING_KEY)==="1"}
+function setPending(v){lsSet(GDRIVE_PENDING_KEY,v?"1":"0")}
+function markForceOverwrite(){lsSet(GDRIVE_FORCE_KEY,"1")}
+function hhmm(t){return new Date(t).toLocaleTimeString("ar-SA",{hour:"2-digit",minute:"2-digit"})}
+
+function saveTokenSession(){try{sessionStorage.setItem(GDRIVE_TOKEN_KEY,JSON.stringify({t:gAccessToken,e:gTokenExp,c:getClientId()}))}catch(e){}}
+function loadTokenSession(){
+ try{let x=JSON.parse(sessionStorage.getItem(GDRIVE_TOKEN_KEY)||"null");
+   if(x&&x.c===getClientId()&&x.e>Date.now()+60000){gAccessToken=x.t;gTokenExp=x.e;return true}}catch(e){}
+ return false;
 }
-function waitForGis(timeoutMs=6000){
- return new Promise(res=>{
-   let start=Date.now();
-   (function chk(){
-     if(window.google&&google.accounts&&google.accounts.oauth2)return res(true);
-     if(Date.now()-start>timeoutMs)return res(false);
-     setTimeout(chk,150);
-   })();
- });
+function clearToken(){gAccessToken=null;gTokenExp=0;try{sessionStorage.removeItem(GDRIVE_TOKEN_KEY)}catch(e){}}
+function storeFileId(){
+ if(gDriveFileId)lsSet(GDRIVE_FILE_KEY,JSON.stringify({c:getClientId(),id:gDriveFileId,m:gLastKnownModified}));
+ else lsDel(GDRIVE_FILE_KEY);
+}
+function loadStoredFileId(){
+ try{let x=JSON.parse(lsGet(GDRIVE_FILE_KEY)||"null");
+   if(x&&x.c===getClientId()&&x.id){gDriveFileId=x.id;gLastKnownModified=x.m||null;return}}catch(e){}
+ gDriveFileId=null;gLastKnownModified=null;
+}
+
+function setSyncStatus(t,c="blue"){let e=document.getElementById("syncStatus");if(!e)return;if(!t){e.style.display="none";return}e.textContent=t;e.className="badge "+c;e.style.display=""}
+function renderGdriveStatus(){
+ let wanted=driveWanted(),ok=wanted&&tokenValid(),pend=isPending();
+ let badge=document.getElementById("gdriveBadge"),txt=document.getElementById("gdriveStatusText");
+ let banner=document.getElementById("driveBanner"),bText=document.getElementById("driveBannerText");
+ if(badge){badge.textContent=ok?"متصل":wanted?"يلزم إعادة الاتصال":"غير متصل";badge.className="badge "+(ok?"green":wanted?"red":"blue")}
+ if(txt){
+   txt.textContent=gDriveMsg||(ok?"متصل بجوجل درايف ويُزامن تلقائيًا."+(gLastSyncAt?" آخر مزامنة: "+hhmm(gLastSyncAt)+".":""):
+     wanted?"انقطع الاتصال (تنتهي صلاحية جوجل كل ساعة تقريبًا). اضغط «حفظ واتصال» أو زر «إعادة الاتصال» أعلى الصفحة.":
+     "لم يتم الاتصال بعد. أدخل الـ Client ID واضغط «حفظ واتصال».");
+ }
+ if(banner){
+   let show=wanted&&!ok;banner.style.display=show?"flex":"none";
+   if(show&&bText)bText.textContent=gDriveMsg||(pend?
+     "انقطع الاتصال بجوجل درايف. تعديلاتك محفوظة على هذا الجهاز ولم تُرفع بعد، فاضغط «إعادة الاتصال» لرفعها.":
+     "انقطع الاتصال بجوجل درايف (تنتهي الصلاحية كل ساعة تقريبًا). اضغط «إعادة الاتصال» لمتابعة المزامنة.");
+ }
+ if(!wanted)setSyncStatus(null);
+ else if(!ok)setSyncStatus(pend?"⚠ تعديلات لم تُرفع إلى Drive":"⚠ Drive غير متصل","red");
+ let side=document.getElementById("sideSaveTime");
+ if(side&&wanted)side.innerHTML=(data.meta.updatedAt?"آخر حفظ: "+esc(new Date(data.meta.updatedAt).toLocaleString("ar-SA")):"")+"<br>"+(ok&&!pend?"Drive: متزامن":pend?"Drive: تعديلات بانتظار الرفع":"Drive: غير متصل");
+}
+function waitForGis(timeoutMs=8000){
+ return new Promise(res=>{let start=Date.now();(function chk(){
+   if(window.google&&google.accounts&&google.accounts.oauth2)return res(true);
+   if(Date.now()-start>timeoutMs)return res(false);setTimeout(chk,150)})()});
 }
 function initGoogleTokenClient(cid){
  if(!(window.google&&google.accounts&&google.accounts.oauth2))return null;
  if(gTokenClient&&gTokenClient.__cid===cid)return gTokenClient;
- gTokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:GDRIVE_SCOPE,callback:onGoogleTokenResponse});
- gTokenClient.__cid=cid;
- return gTokenClient;
+ gTokenClient=google.accounts.oauth2.initTokenClient({client_id:cid,scope:GDRIVE_SCOPE,callback:onGoogleTokenResponse,error_callback:onGoogleTokenError});
+ gTokenClient.__cid=cid;return gTokenClient;
 }
 function onGoogleTokenResponse(resp){
  if(resp&&resp.access_token){
-   gAccessToken=resp.access_token;
-   gDriveConnected=true;
-   try{localStorage.setItem(GDRIVE_CONNECTED_KEY,"1")}catch(e){}
-   renderGdriveStatus();
-   setSyncStatus("جارٍ الاتصال بجوجل درايف...","blue");
-   driveInitialSync();
+   gAccessToken=resp.access_token;gTokenExp=Date.now()+((+resp.expires_in||3600)*1000);
+   saveTokenSession();gDriveMsg="";lsSet(GDRIVE_CONNECTED_KEY,"1");
+   renderGdriveStatus();startDrivePolling();syncNow();
  }else{
-   gDriveConnected=false;
+   gDriveMsg=resp&&resp.error==="access_denied"?"لم تُمنح الصلاحية. تأكد أن بريدك مضاف في Test users داخل Google Cloud.":"تعذر الاتصال بجوجل درايف.";
    renderGdriveStatus();
-   setSyncStatus("تعذر الاتصال بجوجل درايف","red");
  }
 }
-async function connectGoogleDrive(){
+function onGoogleTokenError(err){
+ let t=err&&err.type;
+ gDriveMsg=t==="popup_failed_to_open"?"منع المتصفح نافذة جوجل. اسمح بالنوافذ المنبثقة لهذا الموقع ثم اضغط «إعادة الاتصال».":
+   t==="popup_closed"?"أُغلقت نافذة جوجل قبل إتمام الاتصال. اضغط «إعادة الاتصال» مرة أخرى.":"تعذر فتح نافذة جوجل.";
+ renderGdriveStatus();
+}
+// يجب أن تُستدعى من ضغطة زر مباشرة، وإلا منع المتصفح النافذة.
+function requestDriveToken(consent){
+ let cid=getClientId();
+ if(!cid){toast("أدخل Client ID أولًا من صفحة الإعدادات");return}
+ if(!(window.google&&google.accounts&&google.accounts.oauth2)){
+   setSyncStatus("جارٍ تحميل مكتبة جوجل...","yellow");
+   waitForGis().then(ok=>{toast(ok?"تم تحميل مكتبة جوجل، اضغط الزر مرة أخرى":"تعذر تحميل مكتبة جوجل، تحقق من الإنترنت");renderGdriveStatus()});
+   return;
+ }
+ let tc=initGoogleTokenClient(cid);if(!tc){toast("تعذر تهيئة الاتصال بجوجل");return}
+ gDriveMsg="";
+ tc.requestAccessToken({prompt:consent?"consent":""});
+}
+function connectGoogleDrive(){
  let cid=(document.getElementById("gdriveClientId").value||"").trim();
  if(!cid){toast("أدخل Client ID أولًا");return}
- try{localStorage.setItem(GDRIVE_CLIENTID_KEY,cid)}catch(e){}
- setSyncStatus("جارٍ تحميل مكتبة جوجل...","yellow");
- let ok=await waitForGis();
- if(!ok){toast("تعذر تحميل مكتبة جوجل (تحقق من الاتصال بالإنترنت)");setSyncStatus("تعذر تحميل مكتبة جوجل","red");return}
- let tc=initGoogleTokenClient(cid);
- if(!tc){toast("تعذر تهيئة الاتصال بجوجل");return}
- tc.requestAccessToken({prompt:"consent"});
+ let firstTime=lsGet(GDRIVE_CONNECTED_KEY)!=="1";
+ if(cid!==getClientId()){
+   lsSet(GDRIVE_CLIENTID_KEY,cid);gDriveFileId=null;gLastKnownModified=null;lsDel(GDRIVE_FILE_KEY);clearToken();gTokenClient=null;firstTime=true;
+ }
+ requestDriveToken(firstTime);
 }
 function disconnectGoogleDrive(){
- try{
-   if(gAccessToken&&window.google&&google.accounts&&google.accounts.oauth2)google.accounts.oauth2.revoke(gAccessToken,()=>{});
- }catch(e){}
- gAccessToken=null;gDriveConnected=false;gDriveFileId=null;gLastKnownModified=null;
- clearInterval(gDrivePollTimer);
- try{localStorage.removeItem(GDRIVE_CONNECTED_KEY)}catch(e){}
- setSyncStatus("نسخة محلية فقط","blue");
- renderGdriveStatus();
- toast("تم قطع الاتصال بجوجل درايف");
+ try{if(gAccessToken&&window.google&&google.accounts&&google.accounts.oauth2)google.accounts.oauth2.revoke(gAccessToken,()=>{})}catch(e){}
+ clearToken();clearInterval(gDrivePollTimer);clearTimeout(gDrivePushTimer);
+ lsDel(GDRIVE_CONNECTED_KEY);gDriveMsg="";
+ renderGdriveStatus();updateSaveTime();
+ toast("تم قطع الاتصال. بياناتك باقية على هذا الجهاز وفي Drive.");
 }
+function onSyncBadgeClick(){
+ if(!driveWanted()){document.querySelector('.nav button[data-page="settings"]').click();return}
+ if(!tokenValid())requestDriveToken(false);else syncNow();
+}
+
 async function driveApiFetch(url,opts={}){
- if(!gAccessToken)throw new Error("no_token");
+ if(!gAccessToken)throw new Error("unauthorized");
  opts.headers=Object.assign({},opts.headers,{Authorization:"Bearer "+gAccessToken});
  let res=await fetch(url,opts);
- if(res.status===401){gAccessToken=null;gDriveConnected=false;renderGdriveStatus();throw new Error("unauthorized")}
+ if(res.status===401){clearToken();throw new Error("unauthorized")}
  return res;
 }
-async function driveFindFile(){
- let q=encodeURIComponent(`name='${GOOGLE_DRIVE_FILENAME}' and trashed=false`);
- let res=await driveApiFetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name,modifiedTime)&spaces=drive`);
+function driveQ(name){return encodeURIComponent(`name='${name.replace(/\\/g,"\\\\").replace(/'/g,"\\'")}' and trashed=false`)}
+async function driveFindFiles(name){
+ let res=await driveApiFetch(`${DRIVE_API}?q=${driveQ(name)}&orderBy=modifiedTime%20desc&pageSize=20&fields=files(id,name,modifiedTime)&spaces=drive`);
  if(!res.ok)throw new Error("search_failed");
- let json=await res.json();
- return (json.files&&json.files[0])||null;
+ let json=await res.json();return json.files||[];
 }
-async function driveCreateFile(content){
+async function driveCreateFile(content,name=GOOGLE_DRIVE_FILENAME){
  let boundary="-------314159265358979323846";
- let metadata={name:GOOGLE_DRIVE_FILENAME,mimeType:"application/json"};
- let body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${content}\r\n--${boundary}--`;
- let res=await driveApiFetch("https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,modifiedTime",{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+boundary},body});
+ let body=`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({name,mimeType:"application/json"})}\r\n--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${content}\r\n--${boundary}--`;
+ let res=await driveApiFetch(`${DRIVE_UPLOAD}?uploadType=multipart&fields=id,modifiedTime`,{method:"POST",headers:{"Content-Type":"multipart/related; boundary="+boundary},body});
  if(!res.ok)throw new Error("create_failed");
  return res.json();
 }
 async function driveUpdateFile(fileId,content){
- let res=await driveApiFetch(`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=media&fields=id,modifiedTime`,{method:"PATCH",headers:{"Content-Type":"application/json; charset=UTF-8"},body:content});
+ let res=await driveApiFetch(`${DRIVE_UPLOAD}/${fileId}?uploadType=media&fields=id,modifiedTime`,{method:"PATCH",headers:{"Content-Type":"application/json; charset=UTF-8"},body:content});
+ if(res.status===404)return null;
  if(!res.ok)throw new Error("update_failed");
  return res.json();
 }
 async function driveGetContent(fileId){
- let res=await driveApiFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`);
+ let res=await driveApiFetch(`${DRIVE_API}/${fileId}?alt=media`);
  if(!res.ok)throw new Error("get_failed");
  return res.text();
 }
 async function driveGetMeta(fileId){
- let res=await driveApiFetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=modifiedTime`);
+ let res=await driveApiFetch(`${DRIVE_API}/${fileId}?fields=modifiedTime,trashed`);
+ if(res.status===404)return null;
  if(!res.ok)throw new Error("meta_failed");
- return res.json();
+ let m=await res.json();return m.trashed?null:m;
 }
-async function driveInitialSync(){
- try{
-   let f=await driveFindFile();
-   if(f){
-     gDriveFileId=f.id;
-     let text=await driveGetContent(f.id);
-     data=normalizeData(JSON.parse(text));
-     localStorage.setItem(KEY,JSON.stringify(data));
-     gLastKnownModified=f.modifiedTime;
-     renderAll();
-   }else{
-     let created=await driveCreateFile(JSON.stringify(data));
-     gDriveFileId=created.id;
-     gLastKnownModified=created.modifiedTime;
-   }
-   setSyncStatus("متصل بجوجل درايف ✓","green");
-   renderGdriveStatus();
-   startDrivePolling();
- }catch(e){
-   setSyncStatus("تعذر مزامنة جوجل درايف، يعمل النظام محليًا","red");
+// يبحث عن ملف البيانات، وإن وُجدت عدة نسخ (من أخطاء سابقة) يدمجها كلها حتى لا يضيع شيء.
+async function driveLocateAndMergeAll(){
+ let files=await driveFindFiles(GOOGLE_DRIVE_FILENAME);
+ if(!files.length)return null;
+ let merged=null;
+ for(const f of files){
+   try{let d=normalizeData(JSON.parse(await driveGetContent(f.id)));merged=merged?mergeData(merged,d):d}catch(e){}
  }
+ return {id:files[0].id,modifiedTime:files[0].modifiedTime,data:merged||normalizeData(null),composite:files.length>1};
+}
+
+function flushPendingEdits(){
+ if(profileTimer){clearTimeout(profileTimer);profileTimer=null;try{saveProfileFollowup()}catch(e){}}
+ if(window.__st){clearTimeout(window.__st);window.__st=null;saveData()}
 }
 function scheduleCloudPush(){
- if(!gDriveConnected||!gAccessToken)return;
+ if(!driveWanted())return;
+ if(!tokenValid()){renderGdriveStatus();return}
  clearTimeout(gDrivePushTimer);
- setSyncStatus("جارٍ رفع التعديلات لجوجل درايف...","yellow");
- gDrivePushTimer=setTimeout(async()=>{
+ setSyncStatus("تعديلات بانتظار الرفع...","yellow");
+ gDrivePushTimer=setTimeout(()=>{gDrivePushTimer=null;syncNow()},800);
+}
+function syncNow(){
+ if(!driveWanted()||!tokenValid()){renderGdriveStatus();return Promise.resolve(false)}
+ if(gSyncPromise){gSyncAgain=true;return gSyncPromise}
+ gSyncPromise=(async()=>{
+   let okAll=false;
    try{
-     let content=JSON.stringify(data);
-     let res=gDriveFileId?await driveUpdateFile(gDriveFileId,content):await driveCreateFile(content);
-     gDriveFileId=res.id;gLastKnownModified=res.modifiedTime;
-     setSyncStatus("متصل بجوجل درايف ✓","green");
+     let guard=0;
+     do{gSyncAgain=false;await syncOnce()}while(gSyncAgain&&tokenValid()&&++guard<5);
+     okAll=true;gLastSyncAt=Date.now();
+     setSyncStatus(isPending()?"تعديلات بانتظار الرفع...":"متزامن مع Drive ✓ "+hhmm(gLastSyncAt),isPending()?"yellow":"green");
    }catch(e){
-     setSyncStatus("تعذر رفع آخر تعديل لجوجل درايف","red");
+     if(e&&e.message==="unauthorized"){clearToken();gDriveMsg=""}
+     else if(!navigator.onLine)setSyncStatus("لا يوجد إنترنت، سترفع التعديلات لاحقًا","yellow");
+     else setSyncStatus("تعذرت المزامنة، ستُعاد المحاولة تلقائيًا","red");
+   }finally{gSyncPromise=null}
+   renderGdriveStatus();updateStorageInfo();
+   if(okAll)maybeDailyBackup();
+   return okAll;
+ })();
+ return gSyncPromise;
+}
+async function syncOnce(){
+ if(!navigator.onLine)throw new Error("offline");
+ setSyncStatus("جارٍ المزامنة مع Drive...","yellow");
+ flushPendingEdits();
+ let force=lsGet(GDRIVE_FORCE_KEY)==="1";
+ let remote=null,remoteDirty=false;
+ if(!gDriveFileId){
+   let r=await driveLocateAndMergeAll();
+   if(r){gDriveFileId=r.id;gLastKnownModified=r.modifiedTime;remote=r.data;remoteDirty=r.composite;storeFileId()}
+ }else if(!force){
+   let meta=await driveGetMeta(gDriveFileId);
+   if(!meta){gDriveFileId=null;gLastKnownModified=null;storeFileId();gSyncAgain=true;return}
+   if(meta.modifiedTime!==gLastKnownModified){
+     remote=normalizeData(JSON.parse(await driveGetContent(gDriveFileId)));
+     gLastKnownModified=meta.modifiedTime;storeFileId();
    }
- },600);
+ }
+ // من هنا حتى الرفع: كود متزامن، فلا يمكن أن يضيع تعديل يحدث أثناءه
+ let rev=gLocalRev,pending=isPending(),before=JSON.stringify(data),next=data;
+ if(remote&&!force)next=pending?mergeData(data,remote):remote;
+ if(next!==data&&JSON.stringify(next)!==before){
+   data=next;
+   try{localStorage.setItem(KEY,JSON.stringify(data))}catch(e){}
+   renderAll();
+   toast(pending?"تم دمج تعديلاتك مع بيانات Google Drive":"تم تحديث البيانات من Google Drive");
+ }
+ let needUpload=force||pending||remoteDirty||!gDriveFileId||(remote&&JSON.stringify(next)!==JSON.stringify(remote));
+ if(!needUpload)return;
+ let content=JSON.stringify(data);
+ let res=gDriveFileId?await driveUpdateFile(gDriveFileId,content):await driveCreateFile(content);
+ if(!res){gDriveFileId=null;gLastKnownModified=null;storeFileId();gSyncAgain=true;return}
+ gDriveFileId=res.id;gLastKnownModified=res.modifiedTime;storeFileId();
+ if(force)lsDel(GDRIVE_FORCE_KEY);
+ if(gLocalRev===rev)setPending(false);else gSyncAgain=true;
+}
+async function maybeDailyBackup(){
+ let day=new Date().toLocaleDateString("en-CA");
+ if(lsGet(GDRIVE_BACKUP_DAY_KEY)===day||!tokenValid())return;
+ let name="نسخة_يومية_نظام_المتابعة_"+day+".json";
+ try{
+   let found=await driveFindFiles(name);
+   if(!found.length)await driveCreateFile(JSON.stringify(data),name);
+   lsSet(GDRIVE_BACKUP_DAY_KEY,day);
+ }catch(e){}
 }
 function startDrivePolling(){
  clearInterval(gDrivePollTimer);
- gDrivePollTimer=setInterval(async()=>{
-   if(!gDriveConnected||!gAccessToken||!gDriveFileId)return;
-   try{
-     let meta=await driveGetMeta(gDriveFileId);
-     if(meta.modifiedTime&&meta.modifiedTime!==gLastKnownModified){
-       gLastKnownModified=meta.modifiedTime;
-       let text=await driveGetContent(gDriveFileId);
-       data=normalizeData(JSON.parse(text));
-       localStorage.setItem(KEY,JSON.stringify(data));
-       renderAll();
-       toast("تم تحديث البيانات من جهاز آخر عبر جوجل درايف");
-     }
-   }catch(e){}
+ gDrivePollTimer=setInterval(()=>{
+   if(!driveWanted())return;
+   if(!tokenValid()){renderGdriveStatus();return}
+   if(document.visibilityState==="visible"||isPending())syncNow();
  },20000);
 }
-async function tryAutoReconnectDrive(){
- try{
-   if(localStorage.getItem(GDRIVE_CONNECTED_KEY)!=="1")return;
- }catch(e){return}
- let cid=getClientId();if(!cid)return;
- let ok=await waitForGis();if(!ok)return;
- let tc=initGoogleTokenClient(cid);if(!tc)return;
- tc.requestAccessToken({prompt:""});
+document.addEventListener("visibilitychange",()=>{
+ if(!driveWanted()||!tokenValid()){if(document.visibilityState==="visible")renderGdriveStatus();return}
+ if(document.visibilityState==="hidden"){flushPendingEdits();if(isPending()){clearTimeout(gDrivePushTimer);syncNow()}}
+ else syncNow();
+});
+window.addEventListener("online",()=>syncNow());
+function initDrive(){
+ loadStoredFileId();
+ if(driveWanted()){
+   if(loadTokenSession())syncNow();
+   startDrivePolling();
+ }
+ renderGdriveStatus();
 }
 
+// بيانات قديمة لم تُزامن من هذا الجهاز من قبل: نعاملها كتعديلات معلّقة فتُدمج ولا تُستبدل
+if(lsGet(GDRIVE_PENDING_KEY)===null&&(data.students.length||Object.keys(data.records).length))setPending(true);
 renderAll();
 if(!data.meta.updatedAt)saveData();
-tryAutoReconnectDrive();
+initDrive();
 </script>
 </body>
 </html>
