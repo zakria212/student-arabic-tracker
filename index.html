@@ -129,6 +129,7 @@ th.dua-head{white-space:normal;min-width:74px;max-width:110px;line-height:1.4;fo
 <aside class="sidebar">
   <div class="brand">
     <h1 id="brandTitle">نظام متابعة الطلاب</h1>
+    <div id="termSideLabel" class="badge" style="background:rgba(255,255,255,.18);color:#fff;margin-bottom:6px"></div>
     <p>حفظ تلقائي محليًا + مزامنة اختيارية عبر Google Drive</p>
   </div>
   <nav class="nav">
@@ -152,6 +153,7 @@ th.dua-head{white-space:normal;min-width:74px;max-width:110px;line-height:1.4;fo
 <div class="topbar">
   <h2 id="pageTitle">لوحة التحكم</h2>
   <div class="actions no-print">
+    <select id="termSelect" title="الفترة المعروضة" style="width:auto;min-width:150px;font-weight:700" onchange="setActiveTerm(this.value)"></select>
     <span id="syncStatus" class="badge blue" style="display:none;cursor:pointer" onclick="onSyncBadgeClick()" title="حالة المزامنة مع Google Drive">—</span>
     <span id="saveStatus" class="badge green">محفوظ</span>
     <button class="btn success" onclick="saveNow()">حفظ الآن</button>
@@ -354,6 +356,7 @@ th.dua-head{white-space:normal;min-width:74px;max-width:110px;line-height:1.4;fo
 </section>
 
 <section id="settings" class="page">
+  <div class="panel" id="termsPanel"></div>
   <div class="panel">
     <div class="panel-title"><h3>إعدادات النظام</h3></div>
     <div class="grid2">
@@ -402,6 +405,7 @@ th.dua-head{white-space:normal;min-width:74px;max-width:110px;line-height:1.4;fo
   <input type="hidden" id="editStudentId">
   <div class="grid2">
    <div><label>اسم الطالب *</label><input id="studentName"></div>
+   <div><label>الفترة / الفصل</label><select id="studentTerm"></select></div>
    <div><label>المرحلة الحالية (المستوى والجزء)</label><select id="studentStage"></select></div>
    <div><label>المجموعة</label><select id="studentGrade"></select></div>
    <div><label>الشعبة</label><input id="studentSection" value="أ"></div>
@@ -517,7 +521,7 @@ function builtinUnits(partId){
 }
 // المراحل الظاهرة: المستويات المعتمدة فقط، مع إظهار أي مرحلة فيها طلاب حتى لا يختفي أحد
 function visibleStages(){
- const n=data.curriculum.activeLevels||4,used=new Set(data.students.map(s=>getProg(s.id).partId));
+ const n=data.curriculum.activeLevels||4,used=new Set(S().map(s=>getProg(s.id).partId));
  return allStages().filter(s=>s.li<n||used.has(s.id));
 }
 function normalizeCurriculum(c){
@@ -562,16 +566,16 @@ function goPage(id){const b=document.querySelector(`.nav button[data-page="${id}
 
 function progressStageChanged(){progressStageSel=progressStage.value;renderProgress()}
 function renderStageCards(){
- const counts={};data.students.forEach(s=>{const id=getProg(s.id).partId||"";counts[id]=(counts[id]||0)+1});
+ const counts={};S().forEach(s=>{const id=getProg(s.id).partId||"";counts[id]=(counts[id]||0)+1});
  stageCards.innerHTML=visibleStages().map(s=>`<div class="stage-card ${s.id===progressStageSel?"active":""}" onclick="progressStageSel='${s.id}';renderProgress()"><div class="lv">${esc(s.level.name)}</div><div class="pt">${esc(s.part.name)}</div><div class="ct">${counts[s.id]||0} <small class="muted">طالب</small></div></div>`).join("")
   +(counts[""]?`<div class="stage-card ${progressStageSel==="none"?"active":""}" onclick="progressStageSel='none';renderProgress()"><div class="lv">لم تُحدَّد</div><div class="pt">بدون مرحلة</div><div class="ct">${counts[""]} <small class="muted">طالب</small></div></div>`:"");
 }
 function renderProgress(){
  if(!document.getElementById("progressStage"))return;
- if(progressStageSel==="none"&&!data.students.some(s=>!getProg(s.id).partId))progressStageSel="";
+ if(progressStageSel==="none"&&!S().some(s=>!getProg(s.id).partId))progressStageSel="";
  if(!progressStageSel){
-   const c={};data.students.forEach(s=>{const id=getProg(s.id).partId;if(id)c[id]=(c[id]||0)+1});
-   progressStageSel=Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||(data.students.length?"none":"L1P1");
+   const c={};S().forEach(s=>{const id=getProg(s.id).partId;if(id)c[id]=(c[id]||0)+1});
+   progressStageSel=Object.keys(c).sort((a,b)=>c[b]-c[a])[0]||(S().length?"none":"L1P1");
  }
  progressStage.innerHTML=visibleStages().map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join("")+`<option value="none">طلاب بدون مرحلة</option>`;
  progressStage.value=progressStageSel;
@@ -581,13 +585,13 @@ function renderProgress(){
 function renderProgressGrid(){
  const out=progressGrid,q=(progressSearch.value||"").trim().toLowerCase();
  if(progressStageSel==="none"){
-   const arr=data.students.filter(s=>!getProg(s.id).partId&&(!q||s.name.toLowerCase().includes(q)));
+   const arr=S().filter(s=>!getProg(s.id).partId&&(!q||s.name.toLowerCase().includes(q)));
    out.innerHTML=`<table style="min-width:0"><thead><tr><th>#</th><th>اسم الطالب</th><th>تحديد المرحلة</th></tr></thead><tbody>${arr.map((s,i)=>`<tr><td>${i+1}</td><td class="name">${esc(s.name)}</td><td><select onchange="assignStage('${s.id}',this.value)">${stageOptions("")}</select></td></tr>`).join("")||'<tr><td colspan="3" class="empty">كل الطلاب محددة مراحلهم.</td></tr>'}</tbody></table>`;
    return;
  }
  const st=stageById(progressStageSel);if(!st){out.innerHTML="";return}
  const ls=stageLessons(st.part);
- const arr=data.students.filter(s=>getProg(s.id).partId===st.id&&(!q||s.name.toLowerCase().includes(q)));
+ const arr=S().filter(s=>getProg(s.id).partId===st.id&&(!q||s.name.toLowerCase().includes(q)));
  if(!ls.length){out.innerHTML=`<div class="empty">لم تُضَف وحدات «${esc(st.label)}» بعد.<br><button class="btn primary no-print" style="margin-top:10px" onclick="openCurriculumEditor()">إضافة الوحدات والدروس</button></div>`;return}
  const unitHeads=st.part.units.map((u,ui)=>`<th class="unit-head" colspan="${u.lessons}" title="${esc(u.name)} (اضغط لتعديل الاسم)" style="cursor:pointer" onclick="renameUnitPrompt(${ui})">${esc(u.name||"وحدة")} ✎</th>`).join("");
  const lesHeads=ls.map(l=>`<th class="les-head" title="${esc(l.name)}: اضغط لتسجيله لكل طلاب المرحلة" onclick="toggleLessonAll('${l.id}')">${l.k}</th>`).join("");
@@ -604,7 +608,7 @@ function toggleLesson(sid,lid){
  p.u=Date.now();touch();renderProgressGrid();
 }
 function toggleLessonAll(lid){
- const arr=data.students.filter(s=>getProg(s.id).partId===progressStageSel);if(!arr.length)return;
+ const arr=S().filter(s=>getProg(s.id).partId===progressStageSel);if(!arr.length)return;
  const all=arr.every(s=>getProg(s.id).done?.[lid]);
  if(all&&!confirm("إلغاء تسجيل هذا الدرس لكل طلاب المرحلة؟"))return;
  const t=Date.now();
@@ -699,8 +703,8 @@ function ceCopyToAll(){
 /* ---- العرض في اللوحة والملف الشامل والتصدير ---- */
 function renderStageDistribution(){
  const el=document.getElementById("stageDistribution");if(!el)return;
- if(!data.students.length){el.innerHTML="<div class='empty'>لا يوجد طلاب بعد.</div>";return}
- const c={};data.students.forEach(s=>{const id=getProg(s.id).partId||"";c[id]=(c[id]||0)+1});
+ if(!S().length){el.innerHTML="<div class='empty'>لا يوجد طلاب بعد.</div>";return}
+ const c={};S().forEach(s=>{const id=getProg(s.id).partId||"";c[id]=(c[id]||0)+1});
  const rows=visibleStages().map(s=>({label:s.label,n:c[s.id]||0,id:s.id}));if(c[""])rows.push({label:"بدون مرحلة",n:c[""],id:"none"});
  const max=Math.max(1,...rows.map(r=>r.n));
  el.innerHTML=rows.map(r=>`<div class="dist-row" style="cursor:pointer" onclick="progressStageSel='${r.id}';goPage('progress')"><span>${esc(r.label)}</span><div class="progress"><span style="width:${Math.round(r.n/max*100)}%"></span></div><b>${r.n}</b></div>`).join("");
@@ -724,7 +728,7 @@ function assignStageFromPlacement(sid,target){
  setStudentStage(sid,target,"حسب تقييم المستوى");saveData({snapshot:true});refreshProfileReport();renderStudents();renderProgress();
 }
 function exportProgressCSV(){
- const rows=[["م","اسم الطالب","المرحلة","الدروس المنجزة","مجموع الدروس","النسبة","الدرس التالي"],...data.students.map((s,i)=>{const x=stageStats(s.id);return [i+1,s.name,x.st?x.st.label:"",x.done,x.total,x.total?x.pct+"%":"",x.next?x.next.unit.name+" — "+x.next.name:""]})];
+ const rows=[["م","اسم الطالب","المرحلة","الدروس المنجزة","مجموع الدروس","النسبة","الدرس التالي"],...S().map((s,i)=>{const x=stageStats(s.id);return [i+1,s.name,x.st?x.st.label:"",x.done,x.total,x.total?x.pct+"%":"",x.next?x.next.unit.name+" — "+x.next.name:""]})];
  downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8","التقدم_"+today()+".csv");
 }
 
@@ -834,8 +838,8 @@ function mergeQuran(a,b,del){
 /* ---- الصفحة ---- */
 function renderQuran(){
  const sel=document.getElementById("quranStudent");if(!sel)return;
- if(quranStudentSel&&!data.students.some(s=>s.id===quranStudentSel))quranStudentSel="";
- sel.innerHTML=`<option value="">كل الطلاب (نظرة عامة)</option>`+data.students.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+ if(quranStudentSel&&!S().some(s=>s.id===quranStudentSel))quranStudentSel="";
+ sel.innerHTML=`<option value="">كل الطلاب (نظرة عامة)</option>`+S().map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
  sel.value=quranStudentSel;
  const stSel=document.getElementById("quranStage"),old=stSel.value;
  stSel.innerHTML=`<option value="">كل المراحل</option>`+visibleStages().map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join("");
@@ -846,7 +850,7 @@ function renderQuran(){
 function openQuranStudent(sid){quranStudentSel=sid;goPage("quran")}
 function renderQuranClass(){
  const stage=document.getElementById("quranStage").value;
- const arr=data.students.filter(s=>!stage||getProg(s.id).partId===stage);
+ const arr=S().filter(s=>!stage||getProg(s.id).partId===stage);
  const rows=arr.map((s,i)=>{const x=qStats(s.id);const stale=x.days!==null&&x.days>=Q_STALE_DAYS;
    return `<tr><td>${i+1}</td><td class="name">${esc(s.name)}</td><td><b>${x.planDone}</b>/${x.planTotal}<div class="progress" style="width:70px;margin:3px auto 0"><span style="width:${x.planPct}%"></span></div></td><td>${x.done}</td><td>${x.ay}</td><td>${x.learning?esc(surahName(x.learning))+" <small class='muted'>("+(getQ(s.id).surahs[x.learning].to||0)+"/"+surahAyahs(x.learning)+")</small>":"—"}</td><td>${x.review?`<span class="badge red">${x.review}</span>`:"0"}</td><td>${x.last?`${esc(x.last.date)} <span class="badge ${x.last.grade==="يُعاد"?"red":"green"}">${esc(x.last.grade)}</span>`:"—"}</td><td>${x.days===null?"—":stale?`<span class="badge yellow">${x.days} يومًا</span>`:x.days+" يومًا"}</td><td class="no-print"><button class="btn small primary" onclick="openQuranStudent('${s.id}')">فتح وتسميع</button></td></tr>`}).join("");
  const p=quranPlan(),opts=(sel)=>SURAHS.map((v,i)=>`<option value="${i+1}" ${i+1===sel?"selected":""}>${i+1}. ${esc(v[0])}</option>`).join("");
@@ -942,11 +946,11 @@ function quranProfileHtml(id){
  </div>`;
 }
 function quranAlertsHtml(){
- return data.students.map(s=>({s,x:qStats(s.id)})).filter(o=>o.x.days!==null&&o.x.days>=Q_STALE_DAYS)
+ return S().map(s=>({s,x:qStats(s.id)})).filter(o=>o.x.days!==null&&o.x.days>=Q_STALE_DAYS)
   .map(o=>`<div class="notice warn" style="margin-bottom:8px">الطالب <b>${esc(o.s.name)}</b> لم يُسمّع القرآن منذ ${o.x.days} يومًا. <a href="#" onclick="openQuranStudent('${o.s.id}');return false">فتح</a></div>`).join("");
 }
 function exportQuranCSV(){
- const rows=[["م","اسم الطالب","من المقرر","السور المحفوظة","الآيات المحفوظة","النسبة من القرآن","يحفظ الآن","تحتاج مراجعة","آخر تسميع","عدد الجلسات"],...data.students.map((s,i)=>{const x=qStats(s.id);return [i+1,s.name,x.planDone+"/"+x.planTotal,x.done,x.ay,x.pct+"%",x.learning?surahName(x.learning):"",x.review,x.last?x.last.date:"",x.sessions]})];
+ const rows=[["م","اسم الطالب","من المقرر","السور المحفوظة","الآيات المحفوظة","النسبة من القرآن","يحفظ الآن","تحتاج مراجعة","آخر تسميع","عدد الجلسات"],...S().map((s,i)=>{const x=qStats(s.id);return [i+1,s.name,x.planDone+"/"+x.planTotal,x.done,x.ay,x.pct+"%",x.learning?surahName(x.learning):"",x.review,x.last?x.last.date:"",x.sessions]})];
  downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8","القرآن_"+today()+".csv");
 }
 
@@ -1028,7 +1032,7 @@ function renderDua(){
 }
 function renderDuaGrid(){
  const stage=duaStage.value,cat=duaCat.value,q=(duaSearch.value||"").trim().toLowerCase();
- const students=data.students.filter(s=>(!stage||getProg(s.id).partId===stage)&&(!q||s.name.toLowerCase().includes(q)));
+ const students=S().filter(s=>(!stage||getProg(s.id).partId===stage)&&(!q||s.name.toLowerCase().includes(q)));
  const items=duaItems().filter(i=>cat===""||i.cat===+cat);
  if(!items.length){duaGrid.innerHTML="<div class='empty'>لا توجد أدعية في هذا القسم.</div>";return}
  const cats=[...new Set(items.map(i=>i.cat))];
@@ -1088,7 +1092,7 @@ function duaProfileHtml(id){
 }
 function exportDuaCSV(){
  const items=duaItems();
- const rows=[["م","اسم الطالب","المحفوظ","المجموع",...items.map(i=>i.title)],...data.students.map((s,n)=>{const it=getDp(s.id).items,x=duaStats(s.id);return [n+1,s.name,x.done,x.total,...items.map(i=>DUA_LABEL[it[i.id]?.st||""])]})];
+ const rows=[["م","اسم الطالب","المحفوظ","المجموع",...items.map(i=>i.title)],...S().map((s,n)=>{const it=getDp(s.id).items,x=duaStats(s.id);return [n+1,s.name,x.done,x.total,...items.map(i=>DUA_LABEL[it[i.id]?.st||""])]})];
  downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8","الأدعية_"+today()+".csv");
 }
 
@@ -1141,7 +1145,7 @@ function renderSubjectGrid(){
  const s=curSubject();if(!s){subjectGrid.innerHTML="<div class='empty'>لا توجد مواد. أضف مادة.</div>";return}
  if(!s.lessons.length){subjectGrid.innerHTML=`<div class="empty">لا توجد دروس في «${esc(s.name)}» بعد.<br><button class="btn primary" style="margin-top:10px" onclick="subjectManagerOpen=true;renderSubjects()">إضافة الدروس</button></div>`;return}
  const stage=subjStage.value,q=(subjSearch.value||"").trim().toLowerCase();
- const students=data.students.filter(x=>(!stage||getProg(x.id).partId===stage)&&(!q||x.name.toLowerCase().includes(q)));
+ const students=S().filter(x=>(!stage||getProg(x.id).partId===stage)&&(!q||x.name.toLowerCase().includes(q)));
  const heads=s.lessons.map((l,i)=>`<th class="les-head dua-head" title="${esc(l.title)}${subjectMode==="done"?" — اضغط لتسجيله لكل الطلاب":""}" ${subjectMode==="done"?`onclick="toggleSubjectLessonAll('${l.id}')"`:""}><small>${i+1}</small><br>${esc(l.title)}</th>`).join("");
  const body=students.map((st,n)=>{
    const p=getSp(st.id),x=subjStats(st.id,s);
@@ -1153,7 +1157,7 @@ function renderSubjectGrid(){
 }
 function toggleSubjectLesson(sid,lid){const r=getSp(sid)[lid];setLessonRec(sid,lid,{done:r&&r.done?"":today()});touch();renderSubjectGrid()}
 function toggleSubjectLessonAll(lid){
- const stage=subjStage.value,arr=data.students.filter(x=>!stage||getProg(x.id).partId===stage);if(!arr.length)return;
+ const stage=subjStage.value,arr=S().filter(x=>!stage||getProg(x.id).partId===stage);if(!arr.length)return;
  const all=arr.every(x=>getSp(x.id)[lid]?.done);
  if(all&&!confirm("إلغاء تسجيل هذا الدرس لكل الطلاب المعروضين؟"))return;
  arr.forEach(x=>{if(all)setLessonRec(x.id,lid,{done:""});else if(!getSp(x.id)[lid]?.done)setLessonRec(x.id,lid,{done:today()})});
@@ -1221,7 +1225,7 @@ function subjectsProfileHtml(id){
 }
 function exportSubjectCSV(){
  const s=curSubject();if(!s)return;
- const rows=[["م","اسم الطالب","الدروس المنجزة","المعدل",...s.lessons.map(l=>l.title)],...data.students.map((st,n)=>{const p=getSp(st.id),x=subjStats(st.id,s);return [n+1,st.name,x.done+"/"+x.total,x.avg??"",...s.lessons.map(l=>{const r=p[l.id];return r?(r.score??(r.done?"✓":"")):""})]})];
+ const rows=[["م","اسم الطالب","الدروس المنجزة","المعدل",...s.lessons.map(l=>l.title)],...S().map((st,n)=>{const p=getSp(st.id),x=subjStats(st.id,s);return [n+1,st.name,x.done+"/"+x.total,x.avg??"",...s.lessons.map(l=>{const r=p[l.id];return r?(r.score??(r.done?"✓":"")):""})]})];
  downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8",s.name+"_"+today()+".csv");
 }
 
@@ -1245,13 +1249,13 @@ function parseBulkLine(line){
 function bulkAddStudents(){
  const lines=(bulkNames.value||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
  if(!lines.length){toast("اكتب اسم طالب واحد على الأقل");return}
- const existing=new Set(data.students.map(s=>s.name.trim()));
+ const existing=new Set(S().map(s=>s.name.trim()));
  let added=0,skipped=0;
  lines.forEach(line=>{
    const p=parseBulkLine(line);if(!p.name)return;
    if(existing.has(p.name)){skipped++;return}
    const id=uid();
-   data.students.push({id,name:p.name,grade:bulkGroup.value,section:"أ",number:"",phone:p.phone,notes:p.country,u:Date.now()});
+   data.students.push({id,name:p.name,grade:bulkGroup.value,section:"أ",number:"",phone:p.phone,notes:p.country,termId:newStudentTerm(),u:Date.now()});
    existing.add(p.name);
    if(bulkStage.value)setStudentStage(id,bulkStage.value,"تسجيل الطالب");
    added++;
@@ -1274,7 +1278,7 @@ function renderQuickAttendance(){
  const el=document.getElementById("quickAtt");if(!el)return;
  if(!quickDate)quickDate=today();
  const g=document.getElementById("quickGroup")?.value||"";
- const arr=data.students.filter(s=>!g||s.grade===g);
+ const arr=S().filter(s=>!g||s.grade===g);
  const c={"✓":0,"غ":0,"ت":0,"ع":0,"":0};arr.forEach(s=>c[attAt(quickDate,s.id)]++);
  const groups=`<option value="">كل المجموعات</option>`+data.settings.grades.map(x=>`<option ${x===g?"selected":""}>${esc(x)}</option>`).join("");
  const btn=(s,v,lbl,cls)=>{const cur=attAt(quickDate,s.id)===v;return `<button class="att ${cur?cls:""}" style="min-width:56px" onclick="setQuickAtt('${s.id}','${v}')">${v} ${lbl}</button>`};
@@ -1293,7 +1297,7 @@ function setQuickAtt(sid,v){
 }
 function quickAllPresent(){
  const g=document.getElementById("quickGroup")?.value||"";let n=0;
- data.students.filter(s=>!g||s.grade===g).forEach(s=>{if(!attAt(quickDate,s.id)){setAttAt(quickDate,s.id,"✓");n++}});
+ S().filter(s=>!g||s.grade===g).forEach(s=>{if(!attAt(quickDate,s.id)){setAttAt(quickDate,s.id,"✓");n++}});
  if(!n){toast("كل الطلاب مسجّلون");return}
  touch();renderQuickAttendance();renderAttendance();updateDashboard();toast("سُجّل "+n+" طالب حاضرين");
 }
@@ -1328,7 +1332,7 @@ function renderExams(){
  if(!document.getElementById("examGrid"))return;
  const stages=visibleStages();
  if(!examStageSel||!stages.some(s=>s.id===examStageSel)){
-   const c={};data.students.forEach(s=>{const id=getProg(s.id).partId;if(id)c[id]=(c[id]||0)+1});
+   const c={};S().forEach(s=>{const id=getProg(s.id).partId;if(id)c[id]=(c[id]||0)+1});
    examStageSel=Object.keys(c).filter(id=>stages.some(s=>s.id===id)).sort((a,b)=>c[b]-c[a])[0]||stages[0]?.id||"L1P1";
  }
  examStage.innerHTML=stages.map(s=>`<option value="${s.id}">${esc(s.label)}</option>`).join("");examStage.value=examStageSel;
@@ -1339,7 +1343,7 @@ function renderExams(){
 function renderExamGrid(){
  const ex=examsOf(examStageSel),pass=data.exams.pass;
  if(!ex.length){examGrid.innerHTML=`<div class="empty">لا توجد اختبارات لهذه المرحلة. <button class="btn small primary" onclick="examManagerOpen=true;renderExams()">إضافة اختبار</button></div>`;return}
- const students=data.students.filter(s=>getProg(s.id).partId===examStageSel||ex.some(e=>getEs(s.id)[e.id]));
+ const students=S().filter(s=>getProg(s.id).partId===examStageSel||ex.some(e=>getEs(s.id)[e.id]));
  const heads=ex.map(e=>`<th class="dua-head" title="${esc(e.title)}">${esc(e.title)}<br><small>من ${e.max}${e.date?" — "+esc(e.date):""}</small></th>`).join("");
  const body=students.map((s,n)=>{const sc=getEs(s.id),avg=examAvg(s.id,examStageSel);
    return `<tr><td>${n+1}</td><td class="name">${esc(s.name)}</td>${ex.map(e=>{const v=sc[e.id]?.score;const bad=v!==null&&v!==undefined&&v/e.max*100<pass;return `<td><input class="score-in" type="number" min="0" max="${e.max}" step="0.5" value="${v??""}" style="${bad?"border-color:var(--danger);color:var(--danger)":""}" onchange="setExamScore('${s.id}','${e.id}',this.value)"></td>`}).join("")}<td>${avg===null?"—":`<span class="badge ${avg>=pass?"green":"red"}">${avg}%</span>`}</td></tr>`}).join("");
@@ -1378,7 +1382,7 @@ function examsProfileHtml(id){
 }
 function exportExamsCSV(){
  const ex=examsOf(examStageSel);
- const rows=[["م","اسم الطالب",...ex.map(e=>e.title+" (من "+e.max+")"),"المعدل %"],...data.students.filter(s=>getProg(s.id).partId===examStageSel||ex.some(e=>getEs(s.id)[e.id])).map((s,n)=>[n+1,s.name,...ex.map(e=>getEs(s.id)[e.id]?.score??""),examAvg(s.id,examStageSel)??""])];
+ const rows=[["م","اسم الطالب",...ex.map(e=>e.title+" (من "+e.max+")"),"المعدل %"],...S().filter(s=>getProg(s.id).partId===examStageSel||ex.some(e=>getEs(s.id)[e.id])).map((s,n)=>[n+1,s.name,...ex.map(e=>getEs(s.id)[e.id]?.score??""),examAvg(s.id,examStageSel)??""])];
  downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8","الاختبارات_"+today()+".csv");
 }
 
@@ -1387,7 +1391,7 @@ function studentReportText(sid){
  const s=data.students.find(x=>x.id===sid);if(!s)return "";
  const L=[];
  L.push("السلام عليكم ورحمة الله وبركاته");
- L.push(`تقرير الطالب: ${s.name} — ${monthNames[currentMonth]} ${currentYear}`);
+ L.push(`تقرير الطالب: ${s.name} — ${monthNames[currentMonth]} ${currentYear}${data.terms.list.length>1?" ("+(termById(termOf(s))?.name||"")+")":""}`);
  const x=stageStats(sid);
  if(x.st)L.push(`• المرحلة: ${x.st.label}${x.total?` (أنجز ${x.done} من ${x.total} درسًا، ${x.pct}%)`:""}${x.next?`، الدرس التالي: ${x.next.unit.name} — ${x.next.name}`:""}`);
  const a=getStats(sid);
@@ -1424,8 +1428,8 @@ function renderGettingStarted(){
  const steps=[
    {done:!!(data.settings.teacher||data.settings.school),t:"اكتب اسم الجهة واسم المعلم",b:"الإعدادات",a:"goPage('settings')"},
    {done:typeof driveWanted==="function"&&driveWanted(),t:"اربط Google Drive لحفظ البيانات ونقلها بين أجهزتك",b:"ربط Drive",a:"goPage('settings')"},
-   {done:data.students.length>0,t:"أضف الطلاب (يمكن لصق قائمة الأسماء دفعة واحدة)",b:"إضافة الطلاب",a:"goPage('students');toggleBulkAdd(true)"},
-   {done:data.students.length>0&&data.students.every(s=>getProg(s.id).partId),t:"حدّد مرحلة كل طالب (المستوى والجزء)",b:"تحديد المراحل",a:"progressStageSel='none';goPage('progress')"},
+   {done:S().length>0,t:"أضف الطلاب (يمكن لصق قائمة الأسماء دفعة واحدة)",b:"إضافة الطلاب",a:"goPage('students');toggleBulkAdd(true)"},
+   {done:S().length>0&&S().every(s=>getProg(s.id).partId),t:"حدّد مرحلة كل طالب (المستوى والجزء)",b:"تحديد المراحل",a:"progressStageSel='none';goPage('progress')"},
    {done:Object.keys(data.records).length>0,t:"سجّل حضور اليوم الأول",b:"حضور اليوم",a:"goPage('attendance')"}
  ];
  const left=steps.filter(s=>!s.done).length;
@@ -1455,7 +1459,7 @@ function hwGet(sid,date){return data.hwStatus[sid]?.[date]?.st||""}
 function hwSet(sid,date,st){hwOf(sid)[date]={st,u:Date.now()}}
 function hwTitle(date){return data.hwTitles[date]?.t||""}
 // اليوم «مُسنَد فيه واجب» إذا كُتب عنوانه أو سُجّل لأي طالب فيه شيء
-function hwAssigned(date){if(hwTitle(date))return true;for(const s of data.students)if(hwGet(s.id,date))return true;return false}
+function hwAssigned(date){if(hwTitle(date))return true;for(const s of S())if(hwGet(s.id,date))return true;return false}
 function hwStatsFor(sid,dates){
  let done=0,late=0,missing=0,excused=0,assigned=0;
  dates.forEach(d=>{if(!hwAssigned(d))return;const st=hwGet(sid,d);if(st==="excused"){excused++;return}assigned++;if(st==="done")done++;else if(st==="late")late++;else if(st==="missing")missing++});
@@ -1474,7 +1478,7 @@ function renderHomework(){
  hwGroup.innerHTML=`<option value="">كل المجموعات</option>`+data.settings.grades.map(x=>`<option ${x===g?"selected":""}>${esc(x)}</option>`).join("");
  hwStage.innerHTML=`<option value="">كل المراحل</option>`+visibleStages().map(x=>`<option value="${x.id}" ${x.id===stg?"selected":""}>${esc(x.label)}</option>`).join("");
  hwDays.innerHTML=DAY_NAMES.map((n,i)=>`<label style="display:inline-flex;gap:4px;align-items:center;margin-inline-end:10px;color:var(--text);font-size:13px"><input type="checkbox" style="width:auto" ${studyDays().includes(i)?"checked":""} onchange="toggleStudyDay(${i},this.checked)">${n}</label>`).join("");
- const students=data.students.filter(s=>(!g||s.grade===g)&&(!stg||getProg(s.id).partId===stg));
+ const students=S().filter(s=>(!g||s.grade===g)&&(!stg||getProg(s.id).partId===stg));
  const t=today();
  const heads=dates.map(d=>`<th style="min-width:120px;white-space:normal;${d===t?"background:#0b9aaa":""}"><span class="les-head" style="cursor:pointer" title="اضغط لتسجيل «حلّه» لكل من لم يُسجَّل" onclick="hwAllDone('${d}')">${DAY_NAMES[dateObj(d).getDay()]}<br><small>${d.slice(5)}</small></span><input class="no-print" style="margin-top:6px;font-size:11px;padding:4px" value="${esc(hwTitle(d))}" placeholder="عنوان الواجب" onchange="setHwTitle('${d}',this.value)"><div class="print-only" style="font-size:10px">${esc(hwTitle(d))}</div></th>`).join("");
  const body=students.map((s,n)=>{const w=hwStatsFor(s.id,dates);
@@ -1486,7 +1490,7 @@ function hwThisWeek(){hwRef=today();renderHomework()}
 function cycleHw(sid,date){hwSet(sid,date,HW_NEXT[hwGet(sid,date)]);touch();renderHomework()}
 function hwAllDone(date){
  const g=hwGroup.value,stg=hwStage.value;let n=0;
- data.students.filter(s=>(!g||s.grade===g)&&(!stg||getProg(s.id).partId===stg)).forEach(s=>{if(!hwGet(s.id,date)){hwSet(s.id,date,"done");n++}});
+ S().filter(s=>(!g||s.grade===g)&&(!stg||getProg(s.id).partId===stg)).forEach(s=>{if(!hwGet(s.id,date)){hwSet(s.id,date,"done");n++}});
  if(!n){toast("كل الطلاب مسجّلون في هذا اليوم");return}
  touch();renderHomework();toast("سُجّل «حلّه» لـ "+n+" طالب");
 }
@@ -1499,13 +1503,93 @@ function homeworkProfileHtml(id){
 }
 function homeworkAlertsHtml(){
  const dates=weekDates(today()).filter(d=>d<=today());
- return data.students.map(s=>({s,w:hwStatsFor(s.id,dates)})).filter(o=>o.w.missing>=2)
+ return S().map(s=>({s,w:hwStatsFor(s.id,dates)})).filter(o=>o.w.missing>=2)
   .map(o=>`<div class="notice warn" style="margin-bottom:8px">الطالب <b>${esc(o.s.name)}</b> لم يحلّ ${o.w.missing} واجبات هذا الأسبوع.</div>`).join("");
 }
 function exportHomeworkCSV(){
  const dates=weekDates(hwRef||today());
- const rows=[["م","اسم الطالب",...dates.map(d=>DAY_NAMES[dateObj(d).getDay()]+" "+d+(hwTitle(d)?" — "+hwTitle(d):"")),"المحلول","المُسنَد"],...data.students.map((s,n)=>{const w=hwStatsFor(s.id,dates);return [n+1,s.name,...dates.map(d=>HW_LABEL[hwGet(s.id,d)]),w.solved,w.assigned]})];
+ const rows=[["م","اسم الطالب",...dates.map(d=>DAY_NAMES[dateObj(d).getDay()]+" "+d+(hwTitle(d)?" — "+hwTitle(d):"")),"المحلول","المُسنَد"],...S().map((s,n)=>{const w=hwStatsFor(s.id,dates);return [n+1,s.name,...dates.map(d=>HW_LABEL[hwGet(s.id,d)]),w.solved,w.assigned]})];
  downloadBlob("﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n"),"text/csv;charset=utf-8","الواجبات_"+(dates[0]||today())+".csv");
+}
+
+/* ================= الفترات / الفصول =================
+   لكل فترة طلابها. data.terms = {u, list:[{id,name,start,end}]}، والطالب يحمل termId.
+   الفترة المعروضة تُحفظ على هذا الجهاز فقط (كل جهاز يعرض ما يختاره). "*" = كل الفترات. */
+const ACTIVE_TERM_KEY="active_term_v1";
+let termMoveOpen="";
+function normalizeTerms(x){
+ if(x&&typeof x==="object"&&Array.isArray(x.list)&&x.list.length)
+   return {u:+x.u||0,list:x.list.filter(t=>t&&t.id).map(t=>({id:String(t.id),name:String(t.name||"فترة"),start:String(t.start||""),end:String(t.end||"")}))};
+ return {u:0,list:[{id:"t1",name:"الفترة الأولى",start:"",end:""}]};
+}
+function firstTermId(){return data.terms.list[0]?.id||"t1"}
+function termOf(s){const id=s.termId||firstTermId();return data.terms.list.some(t=>t.id===id)?id:firstTermId()}
+function termById(id){return data.terms.list.find(t=>t.id===id)||null}
+function activeTerm(){
+ let v="";try{v=localStorage.getItem(ACTIVE_TERM_KEY)||""}catch(e){}
+ if(v==="*")return v;
+ if(!termById(v))v=data.terms.list[data.terms.list.length-1]?.id||firstTermId();
+ return v;
+}
+function setActiveTerm(v){try{localStorage.setItem(ACTIVE_TERM_KEY,v)}catch(e){}renderAll()}
+// طلاب الفترة المعروضة: كل الصفحات تعرض هؤلاء
+function S(){const t=activeTerm();return t==="*"?data.students:data.students.filter(s=>termOf(s)===t)}
+// الفترة التي يُسجَّل فيها الطالب الجديد
+function newStudentTerm(){const t=activeTerm();return t==="*"?(data.terms.list[data.terms.list.length-1]?.id||firstTermId()):t}
+function termOptions(sel){return data.terms.list.map(t=>`<option value="${t.id}" ${t.id===sel?"selected":""}>${esc(t.name)}</option>`).join("")}
+
+function renderTermSelect(){
+ const el=document.getElementById("termSelect");if(!el)return;
+ const a=activeTerm();
+ el.innerHTML=termOptions(a)+(data.terms.list.length>1?`<option value="*" ${a==="*"?"selected":""}>كل الفترات</option>`:"");
+ el.value=a;
+ const lbl=document.getElementById("termSideLabel");
+ if(lbl)lbl.textContent=a==="*"?"كل الفترات":(termById(a)?.name||"");
+}
+function renderTermsPanel(){
+ const el=document.getElementById("termsPanel");if(!el)return;
+ const counts={};data.students.forEach(s=>{const t=termOf(s);counts[t]=(counts[t]||0)+1});
+ el.innerHTML=`<div class="panel-title"><h3>الفترات / الفصول</h3><button class="btn primary" onclick="addTerm()">+ فترة جديدة</button></div>
+ <p class="muted" style="margin-top:0">لكل فترة طلابها. اختر الفترة المعروضة من القائمة أعلى الصفحة، فتعرض كل الصفحات طلابها وحدهم. والطالب المنقول إلى فترة أخرى يبقى معه سجله كاملًا: حضوره وحفظه ودرجاته.</p>
+ ${data.terms.list.map((t,i)=>`<div class="card" style="margin-bottom:8px;padding:12px">
+   <div class="grid4">
+     <div><label>اسم الفترة</label><input value="${esc(t.name)}" onchange="termEdit('${t.id}','name',this.value)"></div>
+     <div><label>من تاريخ</label><input type="date" value="${esc(t.start)}" onchange="termEdit('${t.id}','start',this.value)"></div>
+     <div><label>إلى تاريخ</label><input type="date" value="${esc(t.end)}" onchange="termEdit('${t.id}','end',this.value)"></div>
+     <div style="display:flex;align-items:end;gap:6px;flex-wrap:wrap"><span class="badge blue">${counts[t.id]||0} طالب</span><button class="btn small" onclick="setActiveTerm('${t.id}')">عرضها</button><button class="btn small" onclick="termMoveOpen=termMoveOpen==='${t.id}'?'':'${t.id}';renderTermsPanel()">نقل طلاب إليها</button>${data.terms.list.length>1?`<button class="btn small danger" onclick="removeTerm('${t.id}')">حذف</button>`:""}</div>
+   </div>
+   ${termMoveOpen===t.id?termMoveHtml(t):""}
+ </div>`).join("")}`;
+}
+function termMoveHtml(t){
+ const others=data.students.filter(s=>termOf(s)!==t.id);
+ if(!others.length)return `<div class="empty">لا يوجد طلاب في الفترات الأخرى.</div>`;
+ const byTerm=data.terms.list.filter(x=>x.id!==t.id).map(x=>({x,arr:others.filter(s=>termOf(s)===x.id)})).filter(o=>o.arr.length);
+ return `<div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px"><b>اختر الطلاب الذين تنقلهم إلى «${esc(t.name)}»:</b>
+  ${byTerm.map(o=>`<div style="margin-top:8px"><label style="color:var(--text);font-weight:700"><input type="checkbox" style="width:auto" onchange="document.querySelectorAll('.tm-${o.x.id}').forEach(c=>c.checked=this.checked)"> من «${esc(o.x.name)}» (الكل)</label>
+   <div style="display:flex;flex-wrap:wrap;gap:4px 14px;margin-top:4px">${o.arr.map(s=>`<label style="display:inline-flex;gap:4px;align-items:center;color:var(--text);font-size:13px"><input type="checkbox" style="width:auto" class="tm-pick tm-${o.x.id}" value="${s.id}">${esc(s.name)} <small class="muted">${esc(stageStats(s.id).st?.label||"")}</small></label>`).join("")}</div></div>`).join("")}
+  <div class="actions" style="margin-top:10px"><button class="btn primary" onclick="moveStudentsTo('${t.id}')">نقل المحددين</button></div></div>`;
+}
+function termsSave(){data.terms.u=Date.now();saveData();renderAll()}
+function addTerm(){
+ const name=prompt("اسم الفترة أو الفصل الجديد (مثل: الفترة الثانية، فصل المساء):");if(!name||!name.trim())return;
+ const id="t"+uid();data.terms.list.push({id,name:name.trim(),start:today(),end:""});
+ try{localStorage.setItem(ACTIVE_TERM_KEY,id)}catch(e){}
+ termsSave();toast("أُنشئت «"+name.trim()+"» وصارت هي المعروضة. أضف طلابها أو انقلهم إليها.");
+}
+function termEdit(id,f,v){const t=termById(id);if(!t)return;t[f]=f==="name"?(v.trim()||t.name):v;termsSave()}
+function removeTerm(id){
+ const t=termById(id);if(!t)return;
+ const n=data.students.filter(s=>termOf(s)===id).length;
+ if(n){alert(`في «${t.name}» ${n} طالب. انقلهم إلى فترة أخرى أو احذفهم أولًا.`);return}
+ if(!confirm(`حذف «${t.name}»؟`))return;
+ data.terms.list=data.terms.list.filter(x=>x.id!==id);termsSave();
+}
+function moveStudentsTo(tid){
+ const ids=[...document.querySelectorAll(".tm-pick:checked")].map(c=>c.value);
+ if(!ids.length){toast("اختر طالبًا واحدًا على الأقل");return}
+ const now=Date.now();data.students.forEach(s=>{if(ids.includes(s.id)){s.termId=tid;s.u=now}});
+ termMoveOpen="";saveData({snapshot:true});renderAll();toast("نُقل "+ids.length+" طالب إلى «"+termById(tid).name+"»");
 }
 
 const defaultData={
@@ -1525,6 +1609,7 @@ const defaultData={
  examScores:{},
  hwTitles:{},
  hwStatus:{},
+ terms:null,
  deleted:{},
  meta:{createdAt:new Date().toISOString(),updatedAt:null}
 };
@@ -1533,7 +1618,7 @@ let data=loadData(), currentMonth=new Date().getMonth(), currentYear=new Date().
 function clone(x){return JSON.parse(JSON.stringify(x))}
 function normalizeData(x){
  const d=clone(defaultData);
- if(!x||typeof x!=="object"){d.curriculum=normalizeCurriculum(null);d.adhkar=normalizeAdhkar(null);d.subjects=normalizeSubjects(null);d.exams=normalizeExams(null);return d}
+ if(!x||typeof x!=="object"){d.curriculum=normalizeCurriculum(null);d.adhkar=normalizeAdhkar(null);d.subjects=normalizeSubjects(null);d.exams=normalizeExams(null);d.terms=normalizeTerms(null);return d}
  d.version=SCHEMA_VERSION;
  d.settings=Object.assign(d.settings,x.settings||{});
  d.settings.grades=Array.isArray(d.settings.grades)&&d.settings.grades.length?d.settings.grades:clone(defaultData.settings.grades);
@@ -1554,6 +1639,7 @@ function normalizeData(x){
  d.examScores=x.examScores&&typeof x.examScores==="object"?x.examScores:{};
  d.hwTitles=x.hwTitles&&typeof x.hwTitles==="object"?x.hwTitles:{};
  d.hwStatus=x.hwStatus&&typeof x.hwStatus==="object"?x.hwStatus:{};
+ d.terms=normalizeTerms(x.terms);
  d.meta=Object.assign(d.meta,x.meta||{});
  return d;
 }
@@ -1621,6 +1707,7 @@ function mergeData(a,b){
  out.examScores={};
  for(const sid of new Set([...Object.keys(a.examScores),...Object.keys(b.examScores)]))out.examScores[sid]=mergeExamScores(a.examScores[sid],b.examScores[sid]);
  out.hwTitles=mergeKeyed(a.hwTitles,b.hwTitles);
+ out.terms=stamp(a.terms)>=stamp(b.terms)?clone(a.terms):clone(b.terms);
  out.hwStatus={};
  for(const sid of new Set([...Object.keys(a.hwStatus),...Object.keys(b.hwStatus)]))out.hwStatus[sid]=mergeKeyed(a.hwStatus[sid],b.hwStatus[sid]);
  const ua=a.meta.updatedAt||"",ub=b.meta.updatedAt||"";
@@ -1700,7 +1787,7 @@ function populateGrades(){
 }
 function renderStudents(){
  const q=document.getElementById("studentSearch").value.trim().toLowerCase(),g=document.getElementById("studentGradeFilter").value,sg=document.getElementById("studentStageFilter").value;
- let arr=data.students.filter(s=>(!q||s.name.toLowerCase().includes(q)||String(s.number||"").includes(q))&&(!g||s.grade===g)&&(!sg||(sg==="none"?!getProg(s.id).partId:getProg(s.id).partId===sg)));
+ let arr=S().filter(s=>(!q||s.name.toLowerCase().includes(q)||String(s.number||"").includes(q))&&(!g||s.grade===g)&&(!sg||(sg==="none"?!getProg(s.id).partId:getProg(s.id).partId===sg)));
  const stCell=s=>{const x=stageStats(s.id);return x.st?esc(x.st.label):"<span class='muted'>—</span>"};
  const pgCell=s=>{const x=stageStats(s.id);return x.total?`<div style="display:flex;gap:6px;align-items:center;justify-content:center"><div class="progress" style="width:70px"><span style="width:${x.pct}%"></span></div><small>${x.pct}%</small></div>`:"—"};
  document.getElementById("studentsBody").innerHTML=arr.length?arr.map((s,i)=>`<tr><td>${i+1}</td><td class="name">${esc(s.name)}</td><td>${stCell(s)}</td><td>${pgCell(s)}</td><td>${esc(s.grade)}</td><td>${esc(s.section)}</td><td>${esc(s.number)}</td><td>${esc(s.phone)}</td><td>${esc(s.notes)}</td><td><button class="btn small" onclick="openStudentModal('${s.id}')">تعديل</button> <button class="btn small danger" onclick="deleteStudent('${s.id}')">حذف</button></td></tr>`).join(""):`<tr><td colspan="10" class="empty">لا يوجد طلاب</td></tr>`;
@@ -1709,6 +1796,7 @@ function renderStudents(){
 function openStudentModal(id=""){
  document.getElementById("editStudentId").value=id;document.getElementById("modalTitle").textContent=id?"تعديل بيانات الطالب":"إضافة طالب";
  let s=data.students.find(x=>x.id===id)||{name:"",grade:data.settings.defaultGrade,section:"أ",number:"",phone:"",notes:""};
+ {const ex=data.students.find(x=>x.id===id);studentTerm.innerHTML=termOptions(ex?termOf(ex):newStudentTerm())}
  studentStage.innerHTML=stageOptions(id?getProg(id).partId:(window.__lastStage||""));
  studentName.value=s.name;studentGrade.value=s.grade;studentSection.value=s.section;studentNumber.value=s.number;studentPhone.value=s.phone;studentNotes.value=s.notes;
  modalBack.classList.add("show");setTimeout(()=>studentName.focus(),50);
@@ -1717,7 +1805,7 @@ function closeModal(){modalBack.classList.remove("show")}
 function saveStudent(){
  let name=studentName.value.trim();if(!name){toast("أدخل اسم الطالب");return}
  let id=editStudentId.value;
- let obj={id:id||uid(),name,grade:studentGrade.value,section:studentSection.value.trim(),number:studentNumber.value.trim(),phone:studentPhone.value.trim(),notes:studentNotes.value.trim(),u:Date.now()};
+ let obj={id:id||uid(),name,grade:studentGrade.value,section:studentSection.value.trim(),number:studentNumber.value.trim(),phone:studentPhone.value.trim(),notes:studentNotes.value.trim(),termId:studentTerm.value||newStudentTerm(),u:Date.now()};
  window.__lastStage=studentStage.value;
  setStudentStage(obj.id,studentStage.value,id?"تعديل البيانات":"تسجيل الطالب");
  if(id){let i=data.students.findIndex(s=>s.id===id);if(i>=0)data.students[i]=obj}else data.students.push(obj);
@@ -1732,7 +1820,7 @@ function deleteStudent(id){
 function statusCycle(v){return v===""?"✓":v==="✓"?"غ":v==="غ"?"ت":v==="ت"?"ع":""}
 function statusClass(v){return v==="✓"?"present":v==="غ"?"absent":v==="ت"?"late":v==="ع"?"leave":""}
 function renderAttendance(){
- let q=attendanceSearch.value.trim().toLowerCase(),arr=data.students.filter(s=>!q||s.name.toLowerCase().includes(q)),d=daysInMonth();
+ let q=attendanceSearch.value.trim().toLowerCase(),arr=S().filter(s=>!q||s.name.toLowerCase().includes(q)),d=daysInMonth();
  let heads=Array.from({length:d},(_,i)=>`<th>${i+1}<br><small>${["أح","اث","ث","أر","خ","ج","س"][new Date(currentYear,currentMonth,i+1).getDay()]}</small></th>`).join("");
  let body=arr.map((s,idx)=>{
    let cells=Array.from({length:d},(_,i)=>{let day=i+1,v=(data.records[monthKey()]?.[s.id]?.days||{})[day]||"";return `<td><button class="att ${statusClass(v)}" title="انقر لتغيير الحالة" onclick="cycle('${s.id}',${day})">${v||"—"}</button></td>`}).join("");
@@ -1746,15 +1834,15 @@ function getStats(id){
  return {present:vals.filter(x=>x==="✓").length,absent:vals.filter(x=>x==="غ").length,late:vals.filter(x=>x==="ت").length,leave:vals.filter(x=>x==="ع").length}
 }
 function updateDashboard(){
- let total=data.students.length,st={present:0,absent:0,late:0,leave:0};
- data.students.forEach(s=>{let x=getStats(s.id);for(let k in st)st[k]+=x[k]});
+ let total=S().length,st={present:0,absent:0,late:0,leave:0};
+ S().forEach(s=>{let x=getStats(s.id);for(let k in st)st[k]+=x[k]});
  mStudents.textContent=total;mPresent.textContent=st.present;mAbsent.textContent=st.absent;mLate.textContent=st.late;
- let need=data.students.filter(s=>getStats(s.id).absent>=3||data.records[monthKey()]?.[s.id]?.grade==="يحتاج متابعة").length;mNeed.textContent=need;
+ let need=S().filter(s=>getStats(s.id).absent>=3||data.records[monthKey()]?.[s.id]?.grade==="يحتاج متابعة").length;mNeed.textContent=need;
  let denom=st.present+st.absent+st.late+st.leave,pct=denom?Math.round((st.present+st.late)/denom*100):0;
  attendancePct.textContent=pct+"%";attendanceBar.style.width=pct+"%";dashMonth.textContent=monthNames[currentMonth]+" "+currentYear;
- let rank=data.students.map(s=>({s,x:getStats(s.id)})).map(o=>({s:o.s,score:o.x.present*2+o.x.late-o.x.absent*2,p:o.x.present})).sort((a,b)=>b.score-a.score).slice(0,5);
+ let rank=S().map(s=>({s,x:getStats(s.id)})).map(o=>({s:o.s,score:o.x.present*2+o.x.late-o.x.absent*2,p:o.x.present})).sort((a,b)=>b.score-a.score).slice(0,5);
  topStudents.innerHTML=rank.length?rank.map((x,i)=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)"><span>${i+1}. ${esc(x.s.name)}</span><b>${x.p} حضور</b></div>`).join(""):"<div class='empty'>لا توجد بيانات بعد</div>";
- let alertsHtml=data.students.filter(s=>getStats(s.id).absent>=3||data.records[monthKey()]?.[s.id]?.grade==="يحتاج متابعة").map(s=>{
+ let alertsHtml=S().filter(s=>getStats(s.id).absent>=3||data.records[monthKey()]?.[s.id]?.grade==="يحتاج متابعة").map(s=>{
    let x=getStats(s.id),reason=[];if(x.absent>=3)reason.push(x.absent+" غياب");if(data.records[monthKey()]?.[s.id]?.grade==="يحتاج متابعة")reason.push("التقدير: يحتاج متابعة");
    return `<div class="notice warn" style="margin-bottom:8px">الطالب <b>${esc(s.name)}</b> — ${reason.join("، ")}.</div>`;
  }).join("");
@@ -1764,9 +1852,9 @@ function updateDashboard(){
  renderStageDistribution();
 }
 function updateStudentLists(){
- const html='<option value="">اختر طالبًا</option>'+data.students.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
+ const html='<option value="">اختر طالبًا</option>'+S().map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join("");
  let el=document.getElementById("profileStudent");
- if(el){let old=el.value;el.innerHTML=html;if(data.students.some(s=>s.id===old))el.value=old;}
+ if(el){let old=el.value;el.innerHTML=html;if(S().some(s=>s.id===old))el.value=old;}
  renderProfile();
 }
 
@@ -1930,12 +2018,12 @@ function importBackup(ev){
 }
 function csvCell(v){v=String(v??"").replace(/"/g,'""');return `"${v}"`}
 function exportStudentsCSV(){
- let rows=[["م","اسم الطالب","المرحلة","المجموعة","الشعبة","رقم الطالب","الهاتف","ملاحظات"],...data.students.map((s,i)=>[i+1,s.name,stageStats(s.id).st?.label||"",s.grade,s.section,s.number,s.phone,s.notes])];
+ let rows=[["م","اسم الطالب","المرحلة","المجموعة","الشعبة","رقم الطالب","الهاتف","ملاحظات"],...S().map((s,i)=>[i+1,s.name,stageStats(s.id).st?.label||"",s.grade,s.section,s.number,s.phone,s.notes])];
  let csv="﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");downloadBlob(csv,"text/csv;charset=utf-8","الطلاب_"+new Date().toISOString().slice(0,10)+".csv");
 }
 function exportAttendanceCSV(){
  let d=daysInMonth(),head=["م","اسم الطالب",...Array.from({length:d},(_,i)=>i+1),"حضور","غياب","تأخر","استئذان"];
- let rows=[head,...data.students.map((s,i)=>{let r=data.records[monthKey()]?.[s.id]?.days||{},st=getStats(s.id);return [i+1,s.name,...Array.from({length:d},(_,j)=>r[j+1]||""),st.present,st.absent,st.late,st.leave]})];
+ let rows=[head,...S().map((s,i)=>{let r=data.records[monthKey()]?.[s.id]?.days||{},st=getStats(s.id);return [i+1,s.name,...Array.from({length:d},(_,j)=>r[j+1]||""),st.present,st.absent,st.late,st.leave]})];
  let csv="﻿"+rows.map(r=>r.map(csvCell).join(",")).join("\r\n");downloadBlob(csv,"text/csv;charset=utf-8",`الحضور_${monthKey()}.csv`);
 }
 function getSnapshots(){try{return JSON.parse(localStorage.getItem(SNAP_KEY)||"[]")}catch(e){return []}}
@@ -1974,7 +2062,7 @@ function updateStorageInfo(){
 }
 function updateSaveTime(){sideSaveTime.textContent=data.meta.updatedAt?"آخر حفظ: "+new Date(data.meta.updatedAt).toLocaleString("ar-SA"):"لم يتم الحفظ بعد";if(typeof driveWanted==="function"&&driveWanted())renderGdriveStatus()}
 function printPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("print-target"));document.getElementById(id).classList.add("print-target");window.print();setTimeout(()=>document.getElementById(id).classList.remove("print-target"),600)}
-function renderAll(){monthsInit();populateGrades();renderStudents();renderAttendance();renderSettings();renderSnapshots();updateDashboard();updateStorageInfo();updateSaveTime();renderProfile();renderProgress();renderQuran();renderDua();renderSubjects();renderExams();renderQuickAttendance();renderHomework()}
+function renderAll(){renderTermSelect();renderTermsPanel();monthsInit();populateGrades();renderStudents();renderAttendance();renderSettings();renderSnapshots();updateDashboard();updateStorageInfo();updateSaveTime();renderProfile();renderProgress();renderQuran();renderDua();renderSubjects();renderExams();renderQuickAttendance();renderHomework()}
 
 document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>{
  document.querySelectorAll(".nav button").forEach(x=>x.classList.remove("active"));b.classList.add("active");
