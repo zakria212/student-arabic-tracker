@@ -164,6 +164,10 @@ th.dua-head{white-space:normal;min-width:74px;max-width:110px;line-height:1.4;fo
   <span id="driveBannerText"></span>
   <button class="btn warning" onclick="requestDriveToken(false)">إعادة الاتصال بجوجل درايف</button>
 </div>
+<div id="localBanner" class="notice warn no-print" style="display:none;margin-bottom:16px;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+  <span id="localBannerText"></span>
+  <span class="actions"><button class="btn warning" onclick="goPage('settings');document.getElementById('gdriveClientId')?.scrollIntoView({behavior:'smooth',block:'center'})">ربط Google Drive</button><button class="btn" onclick="exportBackup()">تصدير نسخة JSON</button><button class="btn small" onclick="hideLocalBanner()">إخفاء اليوم</button></span>
+</div>
 
 <section id="dashboard" class="page active">
   <div id="gettingStarted" class="no-print"></div>
@@ -2060,7 +2064,7 @@ function updateStorageInfo(){
  let b1=new Blob([localStorage.getItem(KEY)||""]).size,b2=new Blob([localStorage.getItem(SNAP_KEY)||""]).size;
  storageInfo.textContent=`البيانات الأساسية: ${(b1/1024).toFixed(1)} KB — لقطات الاسترجاع: ${(b2/1024).toFixed(1)} KB — آخر حفظ: ${data.meta.updatedAt?new Date(data.meta.updatedAt).toLocaleString("ar-SA"):"لم يتم بعد"}`;
 }
-function updateSaveTime(){sideSaveTime.textContent=data.meta.updatedAt?"آخر حفظ: "+new Date(data.meta.updatedAt).toLocaleString("ar-SA"):"لم يتم الحفظ بعد";if(typeof driveWanted==="function"&&driveWanted())renderGdriveStatus()}
+function updateSaveTime(){sideSaveTime.textContent=data.meta.updatedAt?"آخر حفظ: "+new Date(data.meta.updatedAt).toLocaleString("ar-SA"):"لم يتم الحفظ بعد";if(typeof renderGdriveStatus==="function")renderGdriveStatus()}
 function printPage(id){document.querySelectorAll(".page").forEach(x=>x.classList.remove("print-target"));document.getElementById(id).classList.add("print-target");window.print();setTimeout(()=>document.getElementById(id).classList.remove("print-target"),600)}
 function renderAll(){renderTermSelect();renderTermsPanel();monthsInit();populateGrades();renderStudents();renderAttendance();renderSettings();renderSnapshots();updateDashboard();updateStorageInfo();updateSaveTime();renderProfile();renderProgress();renderQuran();renderDua();renderSubjects();renderExams();renderQuickAttendance();renderHomework()}
 
@@ -2138,6 +2142,27 @@ function loadStoredFileId(){
 }
 
 function setSyncStatus(t,c="blue"){let e=document.getElementById("syncStatus");if(!e)return;if(!t){e.style.display="none";return}e.textContent=t;e.className="badge "+c;e.style.display=""}
+/* تنبيه: البيانات محفوظة في هذا المتصفح وحده (Drive غير مربوط)، فلا تظهر في متصفح أو جهاز آخر */
+const LOCAL_BANNER_KEY="local_banner_hidden_v1";
+function browserName(){
+ const ua=navigator.userAgent;
+ if(navigator.brave)return "Brave";
+ if(/Edg\//.test(ua))return "Edge";
+ if(/OPR\//.test(ua))return "Opera";
+ if(/Firefox\//.test(ua))return "Firefox";
+ if(/Chrome\//.test(ua))return "Chrome";
+ if(/Safari\//.test(ua))return "Safari";
+ return "";
+}
+function hideLocalBanner(){lsSet(LOCAL_BANNER_KEY,today());renderGdriveStatus()}
+function renderLocalBanner(wanted){
+ const el=document.getElementById("localBanner"),txt=document.getElementById("localBannerText");if(!el)return;
+ const has=data.students.length>0,hidden=lsGet(LOCAL_BANNER_KEY)===today();
+ const show=!wanted&&has&&!hidden;
+ el.style.display=show?"flex":"none";
+ if(show){const b=browserName();
+   txt.innerHTML=`<b>بياناتك محفوظة في هذا المتصفح فقط${b?" ("+esc(b)+")":""}.</b> لن تظهر إذا فتحت البرنامج من متصفح آخر أو جهاز آخر، وتضيع إذا مُسحت بيانات المتصفح. اربط Google Drive لتُحفظ وتظهر في كل أجهزتك، أو صدّر نسخة JSON احتياطًا.`}
+}
 function renderGdriveStatus(){
  let wanted=driveWanted(),ok=wanted&&tokenValid(),pend=isPending();
  let badge=document.getElementById("gdriveBadge"),txt=document.getElementById("gdriveStatusText");
@@ -2154,9 +2179,11 @@ function renderGdriveStatus(){
      "انقطع الاتصال بجوجل درايف. تعديلاتك محفوظة على هذا الجهاز ولم تُرفع بعد، فاضغط «إعادة الاتصال» لرفعها.":
      "انقطع الاتصال بجوجل درايف (تنتهي الصلاحية كل ساعة تقريبًا). اضغط «إعادة الاتصال» لمتابعة المزامنة.");
  }
- if(!wanted)setSyncStatus(null);
+ renderLocalBanner(wanted);
+ if(!wanted)setSyncStatus(data.students.length?"⚠ محفوظ في هذا المتصفح فقط":null,"yellow");
  else if(!ok)setSyncStatus(pend?"⚠ تعديلات لم تُرفع إلى Drive":"⚠ Drive غير متصل","red");
  let side=document.getElementById("sideSaveTime");
+ if(side&&!wanted)side.innerHTML=(data.meta.updatedAt?"آخر حفظ: "+esc(new Date(data.meta.updatedAt).toLocaleString("ar-SA")):"")+"<br>محفوظ في هذا المتصفح فقط";
  if(side&&wanted)side.innerHTML=(data.meta.updatedAt?"آخر حفظ: "+esc(new Date(data.meta.updatedAt).toLocaleString("ar-SA")):"")+"<br>"+(ok&&!pend?"Drive: متزامن":pend?"Drive: تعديلات بانتظار الرفع":"Drive: غير متصل");
 }
 function waitForGis(timeoutMs=8000){
