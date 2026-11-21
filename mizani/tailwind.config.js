@@ -8,7 +8,7 @@ export default {
         ink: { DEFAULT: '#02343F', 600: '#0A4654', 700: '#01262E', 800: '#011B21' },
         paper: '#F7F5E6',
         cream: '#F0EDCC',
-        plum: '#331B3F',
+        clay: '#B8664A',
         mint: { DEFAULT: '#ACC7B4', soft: '#E3EEE6' },
         income: { DEFAULT: '#14866D', soft: '#E3F3EE' },
         expense: { DEFAULT: '#C94E55', soft: '#FAE8E9' },

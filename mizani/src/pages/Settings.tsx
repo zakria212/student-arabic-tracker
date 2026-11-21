@@ -135,7 +135,7 @@ export default function SettingsPage() {
       </Panel>
 
       <Panel icon={<DatabaseBackup className="h-4 w-4" />} title="النسخ الاحتياطي والاستعادة" id="s-backup">
-        <div className="mb-4 flex gap-3 rounded-xl bg-mint-soft p-3 text-sm leading-6 text-plum dark:bg-[#0A4250] dark:text-[#F0EDCC]">
+        <div className="mb-4 flex gap-3 rounded-xl bg-mint-soft p-3 text-sm leading-6 text-ink dark:bg-[#0A4250] dark:text-[#F0EDCC]">
           <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
           <p>
             بياناتك محفوظة في هذا المتصفح على هذا الجهاز فقط، <b>ولا تتزامن مع أجهزة أخرى</b>. حذف بيانات المتصفح أو فقد الجهاز قد يؤدي إلى فقد سجلاتك
